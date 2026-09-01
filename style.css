@@ -3,10 +3,10 @@
     --card-bg: #1e293b;
     --text: #f1f5f9;
     --text-muted: #94a3b8;
-    --primary: #00d4ff;
-    --primary-hover: #00b8e6;
+    --primary: #ff6600;
+    --primary-hover: #e65c00;
     --secondary: #475569;
-    --accent: #00d4ff;
+    --accent: #ff9900;
     --border: #334155;
     --input-bg: #0f172a;
     --stat-bg: #334155;
@@ -18,10 +18,10 @@
     --card-bg: #ffffff;
     --text: #1e293b;
     --text-muted: #64748b;
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
+    --primary: #ea580c;
+    --primary-hover: #c2410c;
     --secondary: #cbd5e1;
-    --accent: #0284c7;
+    --accent: #f97316;
     --border: #e2e8f0;
     --input-bg: #f1f5f9;
     --stat-bg: #f1f5f9;
@@ -32,11 +32,12 @@ body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background-color: var(--bg);
     color: var(--text);
-    padding: 30px 15px;
+    padding: 20px 12px;
     margin: 0;
     min-height: 100vh;
     box-sizing: border-box;
     position: relative;
+    -webkit-tap-highlight-color: transparent;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -47,7 +48,7 @@ body {
     top: 0;
     left: 0;
     z-index: -1;
-    opacity: 0.6;
+    opacity: 0.5;
 }
 
 .container {
@@ -60,37 +61,34 @@ body {
 .main-header {
     background: var(--card-bg);
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
+    padding: 20px 16px;
+    margin-bottom: 20px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
-    transition: background-color 0.3s ease;
 }
 
 .header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .header-logo {
-    font-size: 28px;
+    font-size: 24px;
 }
 
 .btn-theme {
     background: var(--stat-bg);
     border: 1px solid var(--border);
-    font-size: 1.2rem;
-    padding: 8px 12px;
+    font-size: 1.1rem;
+    padding: 10px 12px;
     border-radius: 50%;
     cursor: pointer;
     box-shadow: var(--shadow);
-    transition: transform 0.2s ease;
-}
-
-.btn-theme:hover {
-    transform: scale(1.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .live-indicator {
@@ -104,8 +102,8 @@ body {
 }
 
 .pulse-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     background-color: #00ff80;
     border-radius: 50%;
     box-shadow: 0 0 8px #00ff80;
@@ -119,110 +117,115 @@ body {
 }
 
 .live-text {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: bold;
     color: #00ff80;
     letter-spacing: 0.5px;
 }
 
 h1 {
-    margin: 0 0 6px 0;
-    font-size: 1.8rem;
+    margin: 0 0 4px 0;
+    font-size: 1.5rem;
     font-weight: 700;
 }
 
 .header-subtitle {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 0.85rem;
 }
 
 .card {
     background: var(--card-bg);
-    padding: 24px;
+    padding: 18px 16px;
     border-radius: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
-    transition: background-color 0.3s ease;
+}
+
+.quick-shifts {
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
 }
 
 .btn-shift {
     background: var(--stat-bg);
     color: var(--text);
     border: 1px solid var(--border);
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 0.85rem;
+    padding: 10px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
+    text-align: center;
     transition: all 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.btn-shift:hover {
-    border-color: var(--primary);
-    background: rgba(0, 212, 255, 0.1);
+.btn-shift:active {
+    transform: scale(0.96);
 }
 
 .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: 1fr;
+    gap: 14px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     color: var(--text-muted);
     font-weight: 500;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .form-group input {
     width: 100%;
-    padding: 12px 14px;
-    border-radius: 8px;
+    padding: 14px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--input-bg);
     color: var(--text);
     box-sizing: border-box;
-    font-size: 1rem;
+    font-size: 16px; /* Prevents auto-zoom on iOS */
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-group input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
 }
 
 .actions {
-    margin-top: 24px;
-    display: flex;
-    gap: 12px;
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
 }
 
 button {
-    padding: 12px 24px;
+    padding: 14px 20px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.95rem;
-    transition: opacity 0.2s, transform 0.1s;
-}
-
-button:active {
-    transform: translateY(1px);
+    min-height: 48px; /* Mobile touch target standard */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-primary {
     background: var(--primary);
-    color: #0f172a;
-}
-
-.btn-primary:hover {
-    opacity: 0.9;
+    color: white;
 }
 
 .btn-secondary {
@@ -233,24 +236,21 @@ button:active {
 .btn-export {
     background: #10b981;
     color: white;
-    padding: 8px 16px;
+    padding: 10px 14px;
     font-size: 0.85rem;
-}
-
-.btn-export:hover {
-    background: #059669;
+    min-height: 40px;
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 24px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .stat-card {
     background: var(--stat-bg);
-    padding: 20px;
+    padding: 16px;
     border-radius: 12px;
     text-align: center;
     border-left: 4px solid var(--accent);
@@ -260,30 +260,32 @@ button:active {
 .stat-label {
     display: block;
     color: var(--text-muted);
-    font-size: 0.8rem;
-    margin-bottom: 6px;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .stat-value {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--text);
 }
 
 .table-container {
     overflow-x: auto;
-    margin-top: 16px;
+    margin-top: 12px;
+    -webkit-overflow-scrolling: touch;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    white-space: nowrap;
 }
 
 th, td {
-    padding: 12px 16px;
+    padding: 10px 12px;
     text-align: left;
     border-bottom: 1px solid var(--border);
 }
@@ -291,41 +293,56 @@ th, td {
 th {
     font-weight: 600;
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     background: var(--stat-bg);
 }
 
 td {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .toast {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background: #10b981;
     color: white;
-    padding: 12px 24px;
+    padding: 12px 20px;
     border-radius: 10px;
     box-shadow: var(--shadow);
     font-weight: 600;
+    font-size: 0.9rem;
     z-index: 1000;
     display: none;
+    width: 90%;
+    max-width: 350px;
+    text-align: center;
     animation: fadeInOut 3s ease forwards;
 }
 
 @keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(20px); }
-    15% { opacity: 1; transform: translateY(0); }
-    85% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(20px); }
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    15% { opacity: 1; transform: translate(-50%, 0); }
+    85% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, 20px); }
 }
 
-@media (max-width: 768px) {
+@media (min-width: 640px) {
     .form-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
+    }
+    body {
+        padding: 30px 20px;
+    }
+    h1 {
+        font-size: 1.8rem;
+    }
+    .btn-shift {
+        font-size: 0.85rem;
+        padding: 10px 14px;
     }
 }
