@@ -143,6 +143,7 @@ meterForm.addEventListener('submit', (e) => {
 
     resultsArea.style.display = 'block';
     updateChart();
+    showToast("⚡ Kalkulasi berhasil dicatat & disimpan!");
 });
 
 function updateChart() {
@@ -225,3 +226,12 @@ downloadBtn.addEventListener('click', () => {
     document.body.appendChild(link);
     link.click();
 });
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.innerText = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3500);
+}

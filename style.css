@@ -166,9 +166,30 @@ th { color: var(--accent); }
     width: 100%;
 }
 
+.toast {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    background: linear-gradient(135deg, #00f2fe, #4facfe);
+    color: #060913;
+    padding: 14px 26px;
+    border-radius: 14px;
+    font-weight: bold;
+    box-shadow: 0 8px 25px rgba(0,242,254,0.4);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 @media print {
     body { background: white; color: black; padding: 0; }
-    #particles-js, .quick-shifts, #meterForm, .actions, #clearHistoryBtn, #downloadBtn, #printBtn { display: none !important; }
+    #particles-js, .quick-shifts, #meterForm, .actions, #clearHistoryBtn, #downloadBtn, #printBtn, .toast { display: none !important; }
     .card { background: white; border: 1px solid #ccc; box-shadow: none; color: black; }
     th { color: black; }
     .stat-card { background: #f8f9fa; border: 1px solid #ddd; color: black; }
