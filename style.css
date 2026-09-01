@@ -61,6 +61,10 @@ h1 {
     box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     backdrop-filter: blur(10px);
     border: 1px solid var(--border);
+    transition: box-shadow 0.3s;
+}
+.card:hover {
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.15);
 }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -86,19 +90,25 @@ button:hover { transform: scale(1.03); }
 .stat-card span { display: block; font-size: 1.5em; font-weight: bold; color: var(--accent); margin-top: 5px; }
 
 .btn-shift {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-size: 14px !important;
     min-height: auto !important;
-    border-radius: 8px;
+    border-radius: 10px;
     flex: 1;
-    min-width: 120px;
+    min-width: 140px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 .btn-shift:hover {
     background: rgba(0, 212, 255, 0.2);
     border-color: var(--accent);
+    transform: translateY(-2px);
+}
+.btn-shift:active {
+    transform: translateY(0);
 }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); }
