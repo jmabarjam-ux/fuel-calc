@@ -7,7 +7,11 @@ const resultTable = document.getElementById('resultTable').querySelector('tbody'
 let tableData = [];
 let usageChart = null;
 
-// Initialize particles.js
+function setShift(start, end) {
+    document.getElementById('timeStart').value = start;
+    document.getElementById('timeEnd').value = end;
+}
+
 particlesJS("particles-js", {
     "particles": {
         "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },

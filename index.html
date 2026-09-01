@@ -17,6 +17,11 @@
         </header>
         
         <div class="card">
+            <div class="quick-shifts" style="margin-bottom: 15px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn-shift" onclick="setShift('08:00', '16:00')">Shift Pagi (08-16)</button>
+                <button type="button" class="btn-shift" onclick="setShift('16:00', '00:00')">Shift Sore (16-00)</button>
+                <button type="button" class="btn-shift" onclick="setShift('00:00', '08:00')">Shift Malam (00-08)</button>
+            </div>
             <form id="meterForm">
                 <div class="form-grid">
                     <div class="form-group">
