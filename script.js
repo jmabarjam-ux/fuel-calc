@@ -24,6 +24,20 @@ particlesJS("particles-js", {
     "interactivity": { "events": { "onhover": { "enable": true, "mode": "repulse" } } }
 });
 
+// Initialize localStorage check on load
+window.addEventListener('DOMContentLoaded', () => {
+    const lastMeter = localStorage.getItem('lastMeterReading');
+    if (lastMeter !== null) {
+        document.getElementById('meterStart').value = lastMeter;
+        document.getElementById('autoFillBadge').style.display = 'inline-block';
+    }
+});
+
+// Hide badge if user manually changes meterStart
+document.getElementById('meterStart').addEventListener('input', () => {
+    document.getElementById('autoFillBadge').style.display = 'none';
+});
+
 meterForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -36,6 +50,9 @@ meterForm.addEventListener('submit', (e) => {
         alert("Angka meter akhir tidak boleh lebih kecil dari meter awal.");
         return;
     }
+
+    // Save last meter reading for next shift
+    localStorage.setItem('lastMeterReading', meterEnd);
 
     // Parse times
     const [sH, sM] = timeStart.split(':').map(Number);
@@ -130,6 +147,8 @@ function updateChart() {
 
 resetBtn.addEventListener('click', () => {
     meterForm.reset();
+    localStorage.removeItem('lastMeterReading');
+    document.getElementById('autoFillBadge').style.display = 'none';
     resultsArea.style.display = 'none';
 });
 
