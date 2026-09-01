@@ -11,7 +11,7 @@ let tableData = [];
 let usageChart = null;
 
 // Theme handling
-const currentTheme = localStorage.getItem('fuelCalcTheme') || 'dark';
+const currentTheme = localStorage.getItem('gasCalcTheme') || 'dark';
 document.documentElement.setAttribute('data-theme', currentTheme);
 updateThemeIcon(currentTheme);
 
@@ -19,7 +19,7 @@ themeToggle.addEventListener('click', () => {
     let theme = document.documentElement.getAttribute('data-theme');
     let newTheme = theme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('fuelCalcTheme', newTheme);
+    localStorage.setItem('gasCalcTheme', newTheme);
     updateThemeIcon(newTheme);
 });
 
@@ -35,18 +35,18 @@ function setShift(start, end) {
 particlesJS("particles-js", {
     "particles": {
         "number": { "value": 50, "density": { "enable": true, "value_area": 800 } },
-        "color": { "value": "#00d4ff" },
+        "color": { "value": "#ff6600" },
         "shape": { "type": "circle" },
         "opacity": { "value": 0.3 },
         "size": { "value": 3 },
-        "line_linked": { "enable": true, "distance": 150, "color": "#00d4ff", "opacity": 0.2, "width": 1 }
+        "line_linked": { "enable": true, "distance": 150, "color": "#ff6600", "opacity": 0.2, "width": 1 }
     },
     "interactivity": { "events": { "onhover": { "enable": true, "mode": "repulse" } } }
 });
 
 // Initialize localStorage check on load
 window.addEventListener('DOMContentLoaded', () => {
-    const lastMeter = localStorage.getItem('lastMeterReadingFuel');
+    const lastMeter = localStorage.getItem('lastMeterReadingGas');
     if (lastMeter !== null) {
         document.getElementById('meterStart').value = lastMeter;
         document.getElementById('autoFillBadge').style.display = 'inline-block';
@@ -68,28 +68,28 @@ meterForm.addEventListener('submit', (e) => {
     const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
 
     if (meterEnd < meterStart) {
-        alert("Angka meter akhir tidak boleh lebih kecil dari meter awal.");
+        alert("Angka meter gas akhir tidak boleh lebih kecil dari meter awal.");
         return;
     }
 
-    localStorage.setItem('lastMeterReadingFuel', meterEnd);
+    localStorage.setItem('lastMeterReadingGas', meterEnd);
 
     const totalUsage = meterEnd - meterStart;
     const totalCost = totalUsage * unitPrice;
 
     // Save to shift history log
     const shiftNote = document.getElementById('shiftNote').value;
-    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogFuel') || '[]');
+    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogGas') || '[]');
     historyLog.unshift({
         submitTime: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
         range: `${timeStart} - ${timeEnd}`,
-        meterRange: `${meterStart} → ${meterEnd}`,
-        total: totalUsage.toFixed(2),
+        meterRange: `${meterStart.toFixed(2)} → ${meterEnd.toFixed(2)} m³`,
+        total: `${totalUsage.toFixed(2)} m³`,
         cost: unitPrice > 0 ? `Rp ${totalCost.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-',
         note: shiftNote || '-'
     });
     if (historyLog.length > 25) historyLog.pop();
-    localStorage.setItem('shiftHistoryLogFuel', JSON.stringify(historyLog));
+    localStorage.setItem('shiftHistoryLogGas', JSON.stringify(historyLog));
     renderShiftHistory();
 
     // Parse times
@@ -126,12 +126,12 @@ meterForm.addEventListener('submit', (e) => {
 
     // Smart Status Tag
     const statusBadge = document.getElementById('shiftStatusBadge');
-    if (avgUsagePerHour > 50) {
-        statusBadge.innerText = "⚠️ Penggunaan Tinggi";
+    if (avgUsagePerHour > 25) {
+        statusBadge.innerText = "⚠️ Aliran Gas Tinggi";
         statusBadge.style.background = "rgba(255, 193, 7, 0.2)";
         statusBadge.style.color = "#ffc107";
     } else {
-        statusBadge.innerText = "⚡ Optimal / Normal";
+        statusBadge.innerText = "🔥 Aliran Gas Normal / Optimal";
         statusBadge.style.background = "rgba(0, 255, 128, 0.2)";
         statusBadge.style.color = "#00ff80";
     }
@@ -168,7 +168,7 @@ meterForm.addEventListener('submit', (e) => {
 
     resultsArea.style.display = 'block';
     updateChart();
-    showToast("⚡ Kalkulasi & Biaya berhasil disimpan!");
+    showToast("🔥 Kalkulasi Pemakaian Gas berhasil dicatat!");
 });
 
 function updateChart() {
@@ -184,10 +184,10 @@ function updateChart() {
         data: {
             labels: tableData.map(row => row.time),
             datasets: [{
-                label: 'Angka Meter',
+                label: 'Meter Gas (m³)',
                 data: tableData.map(row => row.meter),
-                borderColor: '#00d4ff',
-                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                borderColor: '#ff6600',
+                backgroundColor: 'rgba(255, 102, 0, 0.1)',
                 fill: true,
                 tension: 0.1,
                 borderWidth: 3
@@ -207,7 +207,7 @@ function updateChart() {
 }
 
 function renderShiftHistory() {
-    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogFuel') || '[]');
+    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogGas') || '[]');
     const historyCard = document.getElementById('historyLogCard');
     const tbody = document.getElementById('historyLogTable').querySelector('tbody');
     
@@ -222,7 +222,7 @@ function renderShiftHistory() {
             <td>${log.submitTime}</td>
             <td>${log.range}</td>
             <td>${log.meterRange}</td>
-            <td style="color: var(--accent); font-weight: bold;">${log.total}</td>
+            <td style="color: #ff9900; font-weight: bold;">${log.total}</td>
             <td style="color: #10b981; font-weight: bold;">${log.cost}</td>
             <td>${log.note}</td>
         </tr>
@@ -230,36 +230,36 @@ function renderShiftHistory() {
 }
 
 document.getElementById('clearHistoryBtn').addEventListener('click', () => {
-    if (confirm("Yakin ingin menghapus seluruh log riwayat shift?")) {
-        localStorage.removeItem('shiftHistoryLogFuel');
+    if (confirm("Yakin ingin menghapus seluruh log riwayat shift gas?")) {
+        localStorage.removeItem('shiftHistoryLogGas');
         renderShiftHistory();
-        showToast("🗑️ Log riwayat dibersihkan.");
+        showToast("🗑️ Log riwayat gas dibersihkan.");
     }
 });
 
 exportHistoryBtn.addEventListener('click', () => {
-    const historyLog = localStorage.getItem('shiftHistoryLogFuel') || '[]';
+    const historyLog = localStorage.getItem('shiftHistoryLogGas') || '[]';
     const blob = new Blob([historyLog], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "shift_history_log.json";
+    a.download = "gas_shift_history_log.json";
     a.click();
-    showToast("📥 Riwayat diexport ke JSON.");
+    showToast("📥 Riwayat Gas diexport ke JSON.");
 });
 
 downloadBtn.addEventListener('click', () => {
-    let csvContent = "data:text/csv;charset=utf-8,Jam,Angka Meter,Pemakaian Jam,Kumulatif\n";
+    let csvContent = "data:text/csv;charset=utf-8,Jam,Meter Gas (m3),Pemakaian per Jam (m3),Kumulatif (m3)\n";
     tableData.forEach(row => {
         csvContent += `${row.time},${row.meter.toFixed(2)},${row.usage.toFixed(2)},${row.cumulative.toFixed(2)}\n`;
     });
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "data_pemakaian_fuel.csv");
+    link.setAttribute("download", "data_pemakaian_gas.csv");
     document.body.appendChild(link);
     link.click();
-    showToast("📥 CSV Berhasil Didownload.");
+    showToast("📥 CSV Gas Berhasil Didownload.");
 });
 
 printBtn.addEventListener('click', () => {
