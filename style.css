@@ -28,16 +28,19 @@
     --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
 }
 
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg);
     color: var(--text);
-    padding: 20px 12px;
+    padding: env(safe-area-inset-top, 20px) env(safe-area-inset-right, 12px) env(safe-area-inset-bottom, 20px) env(safe-area-inset-left, 12px);
     margin: 0;
     min-height: 100vh;
-    box-sizing: border-box;
     position: relative;
-    -webkit-tap-highlight-color: transparent;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -76,19 +79,6 @@ body {
 
 .header-logo {
     font-size: 24px;
-}
-
-.btn-theme {
-    background: var(--stat-bg);
-    border: 1px solid var(--border);
-    font-size: 1.1rem;
-    padding: 10px 12px;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .live-indicator {
@@ -155,13 +145,15 @@ h1 {
     background: var(--stat-bg);
     color: var(--text);
     border: 1px solid var(--border);
-    padding: 10px 8px;
+    padding: 12px 6px;
     border-radius: 10px;
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     text-align: center;
     transition: all 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -169,6 +161,7 @@ h1 {
 
 .btn-shift:active {
     transform: scale(0.96);
+    opacity: 0.85;
 }
 
 .form-grid {
@@ -192,8 +185,9 @@ h1 {
     border: 1px solid var(--border);
     background: var(--input-bg);
     color: var(--text);
-    box-sizing: border-box;
-    font-size: 16px; /* Prevents auto-zoom on iOS */
+    font-size: 16px; /* Critical for iOS Safari to prevent auto-zoom */
+    -webkit-appearance: none;
+    appearance: none;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -217,10 +211,17 @@ button {
     cursor: pointer;
     font-weight: 600;
     font-size: 0.95rem;
-    min-height: 48px; /* Mobile touch target standard */
+    min-height: 48px; /* Standard mobile touch target */
     display: flex;
     align-items: center;
     justify-content: center;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+button:active {
+    transform: translateY(1px);
+    opacity: 0.9;
 }
 
 .btn-primary {
@@ -273,9 +274,11 @@ button {
 }
 
 .table-container {
+    width: 100%;
     overflow-x: auto;
-    margin-top: 12px;
     -webkit-overflow-scrolling: touch;
+    margin-top: 12px;
+    border-radius: 8px;
 }
 
 table {
@@ -285,7 +288,7 @@ table {
 }
 
 th, td {
-    padding: 10px 12px;
+    padding: 12px;
     text-align: left;
     border-bottom: 1px solid var(--border);
 }
@@ -343,6 +346,6 @@ td {
     }
     .btn-shift {
         font-size: 0.85rem;
-        padding: 10px 14px;
+        padding: 12px 14px;
     }
 }
