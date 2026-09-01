@@ -69,6 +69,10 @@
                 <div class="stat-card">Total Pemakaian: <span id="resTotal"></span></div>
                 <div class="stat-card">Durasi: <span id="resDuration"></span> Jam</div>
                 <div class="stat-card">Rata-rata: <span id="resAvg"></span>/jam</div>
+                <div class="stat-card" style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: rgba(0,212,255,0.05);">
+                    <span style="font-weight: 500; color: #fff;">Status Shift:</span>
+                    <span id="shiftStatusBadge" style="background: rgba(0,255,128,0.2); color: #00ff80; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;">Optimal</span>
+                </div>
             </div>
             
             <div class="card chart-wrapper">
@@ -77,9 +81,12 @@
             </div>
 
             <div class="card">
-                <div class="table-actions">
-                    <h2>Tabel Perkembangan</h2>
-                    <button id="downloadBtn" class="btn-export">Download CSV</button>
+                <div class="table-actions" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">Tabel Perkembangan</h2>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="printBtn" class="btn-secondary" style="background: #4a5568;">Cetak / PDF</button>
+                        <button id="downloadBtn" class="btn-export">Download CSV</button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="resultTable">

@@ -95,6 +95,18 @@ meterForm.addEventListener('submit', (e) => {
     document.getElementById('resDuration').innerText = durationHours.toFixed(2);
     document.getElementById('resAvg').innerText = avgUsagePerHour.toFixed(2);
 
+    // Smart Status Tag
+    const statusBadge = document.getElementById('shiftStatusBadge');
+    if (avgUsagePerHour > 50) {
+        statusBadge.innerText = "⚠️ Penggunaan Tinggi";
+        statusBadge.style.background = "rgba(255, 193, 7, 0.2)";
+        statusBadge.style.color = "#ffc107";
+    } else {
+        statusBadge.innerText = "⚡ Optimal / Normal";
+        statusBadge.style.background = "rgba(0, 255, 128, 0.2)";
+        statusBadge.style.color = "#00ff80";
+    }
+
     // Generate Table
     tableData = [];
     resultTable.innerHTML = '';
@@ -195,6 +207,10 @@ resetBtn.addEventListener('click', () => {
     localStorage.removeItem('lastMeterReading');
     document.getElementById('autoFillBadge').style.display = 'none';
     resultsArea.style.display = 'none';
+});
+
+document.getElementById('printBtn').addEventListener('click', () => {
+    window.print();
 });
 
 downloadBtn.addEventListener('click', () => {

@@ -1,16 +1,16 @@
 :root {
-    --primary: #007bff;
-    --primary-gradient: linear-gradient(135deg, #007bff, #00d4ff);
-    --bg: #0f2027;
-    --card-bg: rgba(255, 255, 255, 0.05);
-    --text: #e0e0e0;
-    --accent: #00d4ff;
-    --border: rgba(255, 255, 255, 0.1);
+    --primary: #00f2fe;
+    --primary-gradient: linear-gradient(135deg, #00f2fe, #4facfe);
+    --bg: #060913;
+    --card-bg: rgba(15, 23, 42, 0.65);
+    --text: #f1f5f9;
+    --accent: #00f2fe;
+    --border: rgba(0, 242, 254, 0.2);
 }
 
 body { 
     font-family: 'Inter', 'Segoe UI', sans-serif; 
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
+    background: radial-gradient(circle at 50% 0%, #1e293b 0%, #060913 100%); 
     color: var(--text); 
     padding: 20px; 
     min-height: 100vh;
@@ -164,6 +164,15 @@ th { color: var(--accent); }
 .chart-wrapper {
     max-height: 250px;
     width: 100%;
+}
+
+@media print {
+    body { background: white; color: black; padding: 0; }
+    #particles-js, .quick-shifts, #meterForm, .actions, #clearHistoryBtn, #downloadBtn, #printBtn { display: none !important; }
+    .card { background: white; border: 1px solid #ccc; box-shadow: none; color: black; }
+    th { color: black; }
+    .stat-card { background: #f8f9fa; border: 1px solid #ddd; color: black; }
+    .stat-card span { color: black; }
 }
 
 @media (max-width: 600px) {
