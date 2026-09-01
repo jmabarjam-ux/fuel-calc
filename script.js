@@ -7,6 +7,19 @@ const resultTable = document.getElementById('resultTable').querySelector('tbody'
 let tableData = [];
 let usageChart = null;
 
+// Initialize particles.js
+particlesJS("particles-js", {
+    "particles": {
+        "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+        "color": { "value": "#00d4ff" },
+        "shape": { "type": "circle" },
+        "opacity": { "value": 0.4 },
+        "size": { "value": 3 },
+        "line_linked": { "enable": true, "distance": 150, "color": "#00d4ff", "opacity": 0.3, "width": 1 }
+    },
+    "interactivity": { "events": { "onhover": { "enable": true, "mode": "repulse" } } }
+});
+
 meterForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
