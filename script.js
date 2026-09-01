@@ -1,11 +1,31 @@
 const meterForm = document.getElementById('meterForm');
 const resetBtn = document.getElementById('resetBtn');
 const downloadBtn = document.getElementById('downloadBtn');
+const printBtn = document.getElementById('printBtn');
 const resultsArea = document.getElementById('resultsArea');
 const resultTable = document.getElementById('resultTable').querySelector('tbody');
+const themeToggle = document.getElementById('themeToggle');
+const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
 let tableData = [];
 let usageChart = null;
+
+// Theme handling
+const currentTheme = localStorage.getItem('fuelCalcTheme') || 'dark';
+document.documentElement.setAttribute('data-theme', currentTheme);
+updateThemeIcon(currentTheme);
+
+themeToggle.addEventListener('click', () => {
+    let theme = document.documentElement.getAttribute('data-theme');
+    let newTheme = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('fuelCalcTheme', newTheme);
+    updateThemeIcon(newTheme);
+});
+
+function updateThemeIcon(theme) {
+    themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
 
 function setShift(start, end) {
     document.getElementById('timeStart').value = start;
@@ -14,19 +34,19 @@ function setShift(start, end) {
 
 particlesJS("particles-js", {
     "particles": {
-        "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+        "number": { "value": 50, "density": { "enable": true, "value_area": 800 } },
         "color": { "value": "#00d4ff" },
         "shape": { "type": "circle" },
-        "opacity": { "value": 0.4 },
+        "opacity": { "value": 0.3 },
         "size": { "value": 3 },
-        "line_linked": { "enable": true, "distance": 150, "color": "#00d4ff", "opacity": 0.3, "width": 1 }
+        "line_linked": { "enable": true, "distance": 150, "color": "#00d4ff", "opacity": 0.2, "width": 1 }
     },
     "interactivity": { "events": { "onhover": { "enable": true, "mode": "repulse" } } }
 });
 
 // Initialize localStorage check on load
 window.addEventListener('DOMContentLoaded', () => {
-    const lastMeter = localStorage.getItem('lastMeterReading');
+    const lastMeter = localStorage.getItem('lastMeterReadingFuel');
     if (lastMeter !== null) {
         document.getElementById('meterStart').value = lastMeter;
         document.getElementById('autoFillBadge').style.display = 'inline-block';
@@ -34,7 +54,6 @@ window.addEventListener('DOMContentLoaded', () => {
     renderShiftHistory();
 });
 
-// Hide badge if user manually changes meterStart
 document.getElementById('meterStart').addEventListener('input', () => {
     document.getElementById('autoFillBadge').style.display = 'none';
 });
@@ -46,28 +65,31 @@ meterForm.addEventListener('submit', (e) => {
     const meterEnd = parseFloat(document.getElementById('meterEnd').value);
     const timeStart = document.getElementById('timeStart').value;
     const timeEnd = document.getElementById('timeEnd').value;
+    const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
 
     if (meterEnd < meterStart) {
         alert("Angka meter akhir tidak boleh lebih kecil dari meter awal.");
         return;
     }
 
-    // Save last meter reading for next shift
-    localStorage.setItem('lastMeterReading', meterEnd);
+    localStorage.setItem('lastMeterReadingFuel', meterEnd);
+
+    const totalUsage = meterEnd - meterStart;
+    const totalCost = totalUsage * unitPrice;
 
     // Save to shift history log
     const shiftNote = document.getElementById('shiftNote').value;
-    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLog') || '[]');
+    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogFuel') || '[]');
     historyLog.unshift({
         submitTime: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
         range: `${timeStart} - ${timeEnd}`,
         meterRange: `${meterStart} → ${meterEnd}`,
-        total: (meterEnd - meterStart).toFixed(2),
+        total: totalUsage.toFixed(2),
+        cost: unitPrice > 0 ? `Rp ${totalCost.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-',
         note: shiftNote || '-'
     });
-    // Keep max 20 logs
-    if (historyLog.length > 20) historyLog.pop();
-    localStorage.setItem('shiftHistoryLog', JSON.stringify(historyLog));
+    if (historyLog.length > 25) historyLog.pop();
+    localStorage.setItem('shiftHistoryLogFuel', JSON.stringify(historyLog));
     renderShiftHistory();
 
     // Parse times
@@ -87,13 +109,20 @@ meterForm.addEventListener('submit', (e) => {
         return;
     }
 
-    const totalUsage = meterEnd - meterStart;
     const avgUsagePerHour = totalUsage / durationHours;
 
     // Update summary
     document.getElementById('resTotal').innerText = totalUsage.toFixed(2);
     document.getElementById('resDuration').innerText = durationHours.toFixed(2);
     document.getElementById('resAvg').innerText = avgUsagePerHour.toFixed(2);
+
+    const costCard = document.getElementById('costCard');
+    if (unitPrice > 0) {
+        document.getElementById('resCost').innerText = `Rp ${totalCost.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        costCard.style.display = 'block';
+    } else {
+        costCard.style.display = 'none';
+    }
 
     // Smart Status Tag
     const statusBadge = document.getElementById('shiftStatusBadge');
@@ -114,13 +143,10 @@ meterForm.addEventListener('submit', (e) => {
     let cumulativeUsage = 0;
     let numFullHours = Math.floor(durationHours);
     
-    // Row 0: Start
     tableData.push({ time: timeStart, meter: meterStart, usage: 0, cumulative: 0 });
     resultTable.innerHTML += `<tr><td>${timeStart}</td><td>${meterStart.toFixed(2)}</td><td>0.00</td><td>0.00</td></tr>`;
     
-    // Intermediate hours
     for (let i = 1; i <= numFullHours; i++) {
-        // Robustly calculate time considering 24h wrap
         let totalHoursFromStart = sH + i;
         let hour = totalHoursFromStart % 24;
         let timeStr = `${hour.toString().padStart(2, '0')}:${sM.toString().padStart(2, '0')}`;
@@ -133,7 +159,6 @@ meterForm.addEventListener('submit', (e) => {
         resultTable.innerHTML += `<tr><td>${timeStr}</td><td>${meterReading.toFixed(2)}</td><td>${usageThisHour.toFixed(2)}</td><td>${cumulativeUsage.toFixed(2)}</td></tr>`;
     }
     
-    // Last row (End) if not already added
     if (durationHours > numFullHours) {
         let usageLastHour = totalUsage - cumulativeUsage;
         cumulativeUsage += usageLastHour;
@@ -143,13 +168,17 @@ meterForm.addEventListener('submit', (e) => {
 
     resultsArea.style.display = 'block';
     updateChart();
-    showToast("⚡ Kalkulasi berhasil dicatat & disimpan!");
+    showToast("⚡ Kalkulasi & Biaya berhasil disimpan!");
 });
 
 function updateChart() {
     const ctx = document.getElementById('usageChart').getContext('2d');
     if (usageChart) usageChart.destroy();
     
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#f1f5f9' : '#1e293b';
+    const gridColor = isDark ? '#334155' : '#e2e8f0';
+
     usageChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -160,22 +189,25 @@ function updateChart() {
                 borderColor: '#00d4ff',
                 backgroundColor: 'rgba(0, 212, 255, 0.1)',
                 fill: true,
-                tension: 0.1
+                tension: 0.1,
+                borderWidth: 3
             }]
         },
         options: {
             responsive: true,
             scales: {
-                y: { ticks: { color: '#e0e0e0' } },
-                x: { ticks: { color: '#e0e0e0' } }
+                y: { ticks: { color: textColor }, grid: { color: gridColor } },
+                x: { ticks: { color: textColor }, grid: { color: gridColor } }
+            },
+            plugins: {
+                legend: { labels: { color: textColor } }
             }
         }
     });
 }
 
-
 function renderShiftHistory() {
-    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLog') || '[]');
+    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogFuel') || '[]');
     const historyCard = document.getElementById('historyLogCard');
     const tbody = document.getElementById('historyLogTable').querySelector('tbody');
     
@@ -191,6 +223,7 @@ function renderShiftHistory() {
             <td>${log.range}</td>
             <td>${log.meterRange}</td>
             <td style="color: var(--accent); font-weight: bold;">${log.total}</td>
+            <td style="color: #10b981; font-weight: bold;">${log.cost}</td>
             <td>${log.note}</td>
         </tr>
     `).join('');
@@ -198,20 +231,21 @@ function renderShiftHistory() {
 
 document.getElementById('clearHistoryBtn').addEventListener('click', () => {
     if (confirm("Yakin ingin menghapus seluruh log riwayat shift?")) {
-        localStorage.removeItem('shiftHistoryLog');
+        localStorage.removeItem('shiftHistoryLogFuel');
         renderShiftHistory();
+        showToast("🗑️ Log riwayat dibersihkan.");
     }
 });
 
-resetBtn.addEventListener('click', () => {
-    meterForm.reset();
-    localStorage.removeItem('lastMeterReading');
-    document.getElementById('autoFillBadge').style.display = 'none';
-    resultsArea.style.display = 'none';
-});
-
-document.getElementById('printBtn').addEventListener('click', () => {
-    window.print();
+exportHistoryBtn.addEventListener('click', () => {
+    const historyLog = localStorage.getItem('shiftHistoryLogFuel') || '[]';
+    const blob = new Blob([historyLog], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "shift_history_log.json";
+    a.click();
+    showToast("📥 Riwayat diexport ke JSON.");
 });
 
 downloadBtn.addEventListener('click', () => {
@@ -222,16 +256,26 @@ downloadBtn.addEventListener('click', () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "data_pemakaian.csv");
+    link.setAttribute("download", "data_pemakaian_fuel.csv");
     document.body.appendChild(link);
     link.click();
+    showToast("📥 CSV Berhasil Didownload.");
+});
+
+printBtn.addEventListener('click', () => {
+    window.print();
+});
+
+resetBtn.addEventListener('click', () => {
+    meterForm.reset();
+    resultsArea.style.display = 'none';
 });
 
 function showToast(message) {
     const toast = document.getElementById('toast');
     toast.innerText = message;
-    toast.classList.add('show');
+    toast.style.display = 'block';
     setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3500);
+        toast.style.display = 'none';
+    }, 3000);
 }
