@@ -31,6 +31,7 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('meterStart').value = lastMeter;
         document.getElementById('autoFillBadge').style.display = 'inline-block';
     }
+    renderShiftHistory();
 });
 
 // Hide badge if user manually changes meterStart
@@ -53,6 +54,21 @@ meterForm.addEventListener('submit', (e) => {
 
     // Save last meter reading for next shift
     localStorage.setItem('lastMeterReading', meterEnd);
+
+    // Save to shift history log
+    const shiftNote = document.getElementById('shiftNote').value;
+    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLog') || '[]');
+    historyLog.unshift({
+        submitTime: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
+        range: `${timeStart} - ${timeEnd}`,
+        meterRange: `${meterStart} → ${meterEnd}`,
+        total: (meterEnd - meterStart).toFixed(2),
+        note: shiftNote || '-'
+    });
+    // Keep max 20 logs
+    if (historyLog.length > 20) historyLog.pop();
+    localStorage.setItem('shiftHistoryLog', JSON.stringify(historyLog));
+    renderShiftHistory();
 
     // Parse times
     const [sH, sM] = timeStart.split(':').map(Number);
@@ -144,6 +160,35 @@ function updateChart() {
     });
 }
 
+
+function renderShiftHistory() {
+    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLog') || '[]');
+    const historyCard = document.getElementById('historyLogCard');
+    const tbody = document.getElementById('historyLogTable').querySelector('tbody');
+    
+    if (historyLog.length === 0) {
+        historyCard.style.display = 'none';
+        return;
+    }
+    
+    historyCard.style.display = 'block';
+    tbody.innerHTML = historyLog.map(log => `
+        <tr>
+            <td>${log.submitTime}</td>
+            <td>${log.range}</td>
+            <td>${log.meterRange}</td>
+            <td style="color: var(--accent); font-weight: bold;">${log.total}</td>
+            <td>${log.note}</td>
+        </tr>
+    `).join('');
+}
+
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+    if (confirm("Yakin ingin menghapus seluruh log riwayat shift?")) {
+        localStorage.removeItem('shiftHistoryLog');
+        renderShiftHistory();
+    }
+});
 
 resetBtn.addEventListener('click', () => {
     meterForm.reset();
