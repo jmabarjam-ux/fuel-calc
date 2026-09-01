@@ -17,7 +17,32 @@ body {
     margin: 0;
 }
 .container { max-width: 900px; margin: auto; }
-h1 { text-align: center; color: #fff; margin-bottom: 30px; }
+.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+}
+
+.header-logo {
+    font-size: 2rem;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 .card { 
     background: var(--card-bg); 
     padding: 30px; 
