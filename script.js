@@ -1,143 +1,107 @@
-const calcForm = document.getElementById('calcForm');
-const historyTable = document.querySelector('#historyTable tbody');
-let chart = null;
+const meterForm = document.getElementById('meterForm');
+const resetBtn = document.getElementById('resetBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const resultsArea = document.getElementById('resultsArea');
+const resultTable = document.getElementById('resultTable').querySelector('tbody');
 
-// Initialize particles.js
-particlesJS("particles-js", {
-    "particles": {
-        "number": { "value": 80 },
-        "color": { "value": "#ffffff" },
-        "shape": { "type": "circle" },
-        "opacity": { "value": 0.5 },
-        "size": { "value": 3 },
-        "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 }
-    },
-    "interactivity": { "events": { "onhover": { "enable": true, "mode": "repulse" } } }
-});
+let tableData = [];
 
-function populateTimeSelects() {
-    const selects = ['startTime', 'endTime'];
-    selects.forEach(id => {
-        const select = document.getElementById(id);
-        select.innerHTML = ''; // Clear existing options
-        
-        // Add placeholder
-        const placeholder = document.createElement('option');
-        placeholder.text = "Pilih Jam";
-        placeholder.value = "";
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        select.appendChild(placeholder);
-        
-        // Add hours
-        for (let i = 0; i < 24; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.innerHTML = i.toString().padStart(2, '0') + ':00';
-            select.appendChild(opt);
-        }
-    });
-}
-
-calcForm.addEventListener('submit', (e) => {
+meterForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const startVal = document.getElementById('startTime').value;
-    const endVal = document.getElementById('endTime').value;
+    
+    const meterStart = parseFloat(document.getElementById('meterStart').value);
+    const meterEnd = parseFloat(document.getElementById('meterEnd').value);
+    const timeStart = document.getElementById('timeStart').value;
+    const timeEnd = document.getElementById('timeEnd').value;
 
-    if (startVal === "" || endVal === "") {
-        alert("Silakan pilih Jam Mulai dan Jam Selesai!");
+    if (meterEnd < meterStart) {
+        alert("Angka meter akhir tidak boleh lebih kecil dari meter awal.");
         return;
     }
 
-    const startH = parseInt(startVal);
-    const endH = parseInt(endVal);
-    const fuelStart = parseFloat(document.getElementById('fuelStart').value);
-    const fuelEnd = parseFloat(document.getElementById('fuelEnd').value);
+    // Parse times
+    const [sH, sM] = timeStart.split(':').map(Number);
+    const [eH, eM] = timeEnd.split(':').map(Number);
+
+    let startTotalMinutes = sH * 60 + sM;
+    let endTotalMinutes = eH * 60 + eM;
+
+    if (endTotalMinutes <= startTotalMinutes) endTotalMinutes += 24 * 60;
     
-    if (isNaN(fuelStart) || isNaN(fuelEnd)) {
-        alert("Silakan masukkan nilai bahan bakar yang valid!");
+    const durationMinutes = endTotalMinutes - startTotalMinutes;
+    const durationHours = durationMinutes / 60;
+
+    if (durationMinutes === 0) {
+        alert("Waktu awal dan akhir tidak boleh sama jika angka meter berbeda.");
         return;
     }
 
-    let duration = endH - startH;
-    if (duration <= 0) duration += 24; 
+    const totalUsage = meterEnd - meterStart;
+    const avgUsagePerHour = totalUsage / durationHours;
 
-    const rate = (fuelEnd - fuelStart) / duration;
+    // Update summary
+    document.getElementById('resTotal').innerText = totalUsage.toFixed(2);
+    document.getElementById('resDuration').innerText = durationHours.toFixed(2);
+    document.getElementById('resAvg').innerText = avgUsagePerHour.toFixed(2);
+
+    // Generate Table
+    tableData = [];
+    resultTable.innerHTML = '';
     
-    let resultText = "";
-    if (rate < 0) {
-        resultText = `Pemakaian: ${Math.abs(rate).toFixed(2)} L/jam`;
-    } else if (rate > 0) {
-        resultText = `Peningkatan: ${rate.toFixed(2)} L/jam`;
-    } else {
-        resultText = "Tidak ada perubahan";
+    let currentMeter = meterStart;
+    let cumulativeUsage = 0;
+    
+    // We need to iterate hourly
+    let numHours = Math.ceil(durationHours);
+    
+    for (let i = 0; i <= numHours; i++) {
+        let hourOffset = i;
+        let currentTime = new Date(0, 0, 0, sH, sM + (i * 60));
+        let timeStr = currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        
+        let usageThisHour = 0;
+        let meterReading = 0;
+        
+        if (i === 0) {
+            usageThisHour = 0;
+            meterReading = meterStart;
+        } else if (i === numHours) {
+            usageThisHour = totalUsage - cumulativeUsage;
+            meterReading = meterEnd;
+        } else {
+            usageThisHour = avgUsagePerHour;
+            cumulativeUsage += usageThisHour;
+            meterReading = meterStart + cumulativeUsage;
+        }
+        
+        tableData.push({ time: timeStr, meter: meterReading, usage: usageThisHour, cumulative: (meterReading - meterStart) });
+
+        let row = `<tr>
+            <td>${timeStr}</td>
+            <td>${meterReading.toFixed(2)}</td>
+            <td>${usageThisHour.toFixed(2)}</td>
+            <td>${(meterReading - meterStart).toFixed(2)}</td>
+        </tr>`;
+        resultTable.innerHTML += row;
     }
-    
-    document.getElementById('result').innerText = resultText;
-    document.getElementById('startTime').value = "";
-    document.getElementById('endTime').value = "";
-    document.getElementById('fuelStart').value = "";
-    document.getElementById('fuelEnd').value = "";
 
-    const entry = { time: `${startH}:00-${endH}:00`, rate: rate.toFixed(2) };
-    const history = JSON.parse(localStorage.getItem('fuelHistory') || '[]');
-    history.push(entry);
-    localStorage.setItem('fuelHistory', JSON.stringify(history));
-    renderHistory();
-    renderChart();
+    resultsArea.style.display = 'block';
 });
 
-function renderHistory() {
-    const history = JSON.parse(localStorage.getItem('fuelHistory') || '[]');
-    historyTable.innerHTML = history.map(h => {
-        const val = parseFloat(h.rate);
-        const type = val < 0 ? 'Pemakaian' : (val > 0 ? 'Peningkatan' : 'Stabil');
-        return `<tr><td>${h.time}</td><td>${Math.abs(val).toFixed(2)} L/jam (${type})</td></tr>`;
-    }).join('');
-    if(history.length > 0) {
-        historyTable.innerHTML += `<tr><td colspan="2"><button onclick="clearHistory()" style="background:#dc3545">Hapus Riwayat</button></td></tr>`;
-    }
-}
+resetBtn.addEventListener('click', () => {
+    meterForm.reset();
+    resultsArea.style.display = 'none';
+});
 
-function clearHistory() {
-    localStorage.removeItem('fuelHistory');
-    renderHistory();
-    renderChart();
-}
-
-function renderChart() {
-    const history = JSON.parse(localStorage.getItem('fuelHistory') || '[]');
-    const ctx = document.getElementById('fuelChart').getContext('2d');
-    
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: history.map((_, i) => i + 1),
-            datasets: [{ 
-                label: 'Laju Perubahan (L/jam)', 
-                data: history.map(h => h.rate),
-                borderColor: '#00d4ff',
-                backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                tension: 0.1
-            }]
-        },
-        options: { 
-            responsive: true,
-            scales: { 
-                y: { 
-                    ticks: { color: 'white' },
-                    beginAtZero: false 
-                }, 
-                x: { ticks: { color: 'white' } } 
-            }
-        }
+downloadBtn.addEventListener('click', () => {
+    let csvContent = "data:text/csv;charset=utf-8,Jam,Angka Meter,Pemakaian Jam,Kumulatif\n";
+    tableData.forEach(row => {
+        csvContent += `${row.time},${row.meter.toFixed(2)},${row.usage.toFixed(2)},${row.cumulative.toFixed(2)}\n`;
     });
-}
-
-// Initialization
-window.onload = () => {
-    populateTimeSelects();
-    renderHistory();
-    renderChart();
-};
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "data_pemakaian.csv");
+    document.body.appendChild(link);
+    link.click();
+});

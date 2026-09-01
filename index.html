@@ -3,56 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuel Calc Pro</title>
+    <title>Kalkulator Pemakaian Meter</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 </head>
 <body>
-    <div id="particles-js"></div>
-
-    <nav class="sticky-nav">
-        <a href="#calculator">Kalkulator</a>
-        <a href="#history">Riwayat</a>
-        <a href="#chart">Grafik</a>
-    </nav>
-
-    <main>
-        <section id="calculator" class="content-section">
-            <h2>Kalkulator</h2>
-            <form id="calcForm">
-                <label for="startTime">Jam Mulai:</label>
-                <select id="startTime" required></select>
-                
-                <label for="endTime">Jam Selesai:</label>
-                <select id="endTime" required></select>
-                
-                <input type="number" id="fuelStart" placeholder="Bahan Bakar Awal (L)" step="0.01" required>
-                <input type="number" id="fuelEnd" placeholder="Bahan Bakar Akhir (L)" step="0.01" required>
-                <button type="submit">Hitung</button>
+    <div class="container">
+        <h1>Dashboard Pemakaian Meter</h1>
+        
+        <div class="card">
+            <form id="meterForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Angka Meter Awal</label>
+                        <input type="number" id="meterStart" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waktu Awal</label>
+                        <input type="time" id="timeStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Angka Meter Akhir</label>
+                        <input type="number" id="meterEnd" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waktu Akhir</label>
+                        <input type="time" id="timeEnd" required>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn-primary">Hitung</button>
+                    <button type="button" id="resetBtn" class="btn-secondary">Reset</button>
+                </div>
             </form>
-            <div id="result"></div>
-        </section>
+        </div>
 
-        <section id="history" class="content-section">
-            <h2>Riwayat</h2>
-            <table id="historyTable">
-                <thead>
-                    <tr>
-                        <th>Waktu</th>
-                        <th>Pemakaian (L/jam)</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
+        <div id="resultsArea" style="display:none;">
+            <div class="stats-grid">
+                <div class="stat-card">Total Pemakaian: <span id="resTotal"></span></div>
+                <div class="stat-card">Durasi: <span id="resDuration"></span> Jam</div>
+                <div class="stat-card">Rata-rata: <span id="resAvg"></span>/jam</div>
+            </div>
 
-        <section id="chart" class="content-section">
-            <h2>Grafik Pemakaian</h2>
-            <canvas id="fuelChart"></canvas>
-        </section>
-    </main>
-
+            <div class="card">
+                <div class="table-actions">
+                    <h2>Tabel Perkembangan</h2>
+                    <button id="downloadBtn" class="btn-export">Download CSV</button>
+                </div>
+                <div class="table-container">
+                    <table id="resultTable">
+                        <thead>
+                            <tr>
+                                <th>Jam</th>
+                                <th>Angka Meter</th>
+                                <th>Pemakaian Jam</th>
+                                <th>Kumulatif</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
