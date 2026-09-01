@@ -15,13 +15,12 @@
             <div class="header-content">
                 <div class="header-top">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="header-logo">🔥</span>
+                        <span class="header-logo" id="themeIcon">🔥</span>
                         <div class="live-indicator">
                             <span class="pulse-dot"></span>
-                            <span class="live-text">ONLINE</span>
+                            <span class="live-text" id="themeStatusText">ONLINE</span>
                         </div>
                     </div>
-                    <button id="themeToggle" class="btn-theme" title="Ubah Tema">☀️</button>
                 </div>
                 <h1>Monitoring Pemakaian Meter Gas Pro</h1>
                 <p class="header-subtitle">Panel Kontrol Shift Gas, Estimasi Biaya (m³) & Kalkulasi Otomatis</p>
@@ -29,7 +28,7 @@
         </header>
         
         <div class="card">
-            <div class="quick-shifts" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <div class="quick-shifts" style="margin-bottom: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                 <button type="button" class="btn-shift" onclick="setShift('07:00', '15:00')">🌅 Shift Pagi (07-15)</button>
                 <button type="button" class="btn-shift" onclick="setShift('15:00', '23:00')">☀️ Shift Sore (15-23)</button>
                 <button type="button" class="btn-shift" onclick="setShift('23:00', '07:00')">🌙 Shift Malam (23-07)</button>

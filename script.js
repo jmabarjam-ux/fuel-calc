@@ -4,28 +4,29 @@ const downloadBtn = document.getElementById('downloadBtn');
 const printBtn = document.getElementById('printBtn');
 const resultsArea = document.getElementById('resultsArea');
 const resultTable = document.getElementById('resultTable').querySelector('tbody');
-const themeToggle = document.getElementById('themeToggle');
 const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
 let tableData = [];
 let usageChart = null;
 
-// Theme handling
-const currentTheme = localStorage.getItem('gasCalcTheme') || 'dark';
-document.documentElement.setAttribute('data-theme', currentTheme);
-updateThemeIcon(currentTheme);
-
-themeToggle.addEventListener('click', () => {
-    let theme = document.documentElement.getAttribute('data-theme');
-    let newTheme = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('gasCalcTheme', newTheme);
-    updateThemeIcon(newTheme);
-});
-
-function updateThemeIcon(theme) {
-    themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+// Automatic theme based on browser hour (6 AM - 6 PM = Light, otherwise = Dark)
+function applyAutoTheme() {
+    const currentHour = new Date().getHours();
+    const isDayTime = currentHour >= 6 && currentHour < 18;
+    const theme = isDayTime ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    const themeIcon = document.getElementById('themeIcon');
+    const themeStatusText = document.getElementById('themeStatusText');
+    if (themeIcon && themeStatusText) {
+        themeIcon.textContent = isDayTime ? '☀️' : '🌙';
+        themeStatusText.textContent = isDayTime ? 'MODE SIANG' : 'MODE MALAM';
+    }
 }
+
+applyAutoTheme();
+// Re-check theme every 5 minutes
+setInterval(applyAutoTheme, 5 * 60 * 1000);
 
 function setShift(start, end) {
     document.getElementById('timeStart').value = start;
