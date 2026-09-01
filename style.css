@@ -66,10 +66,15 @@ form input, form select {
     padding: 14px; 
     border: 1px solid rgba(255,255,255,0.3); 
     border-radius: 12px; 
-    background: rgba(0, 0, 0, 0.3); /* Darker background for better contrast */
+    background: rgba(0, 0, 0, 0.4); 
     color: #fff; 
-    font-size: 16px; /* Prevents auto-zoom on iOS mobile */
-    -webkit-appearance: none; /* Removes default styling on some mobile browsers */
+    font-size: 16px;
+    -webkit-appearance: menulist; /* Restores arrow icon */
+}
+/* Force styling for options where possible */
+select option {
+    background-color: #0f2027;
+    color: #fff;
 }
 button { 
     padding: 12px 25px; cursor: pointer; border: none; border-radius: 10px; 

@@ -19,6 +19,17 @@ function populateTimeSelects() {
     const selects = ['startTime', 'endTime'];
     selects.forEach(id => {
         const select = document.getElementById(id);
+        select.innerHTML = ''; // Clear existing options
+        
+        // Add placeholder
+        const placeholder = document.createElement('option');
+        placeholder.text = "Pilih Jam";
+        placeholder.value = "";
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+        
+        // Add hours
         for (let i = 0; i < 24; i++) {
             const opt = document.createElement('option');
             opt.value = i;
@@ -30,10 +41,24 @@ function populateTimeSelects() {
 
 calcForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const startH = parseInt(document.getElementById('startTime').value);
-    const endH = parseInt(document.getElementById('endTime').value);
+    const startVal = document.getElementById('startTime').value;
+    const endVal = document.getElementById('endTime').value;
+
+    if (startVal === "" || endVal === "") {
+        alert("Silakan pilih Jam Mulai dan Jam Selesai!");
+        return;
+    }
+
+    const startH = parseInt(startVal);
+    const endH = parseInt(endVal);
     const fuelStart = parseFloat(document.getElementById('fuelStart').value);
     const fuelEnd = parseFloat(document.getElementById('fuelEnd').value);
+    
+    // Validate numbers
+    if (isNaN(fuelStart) || isNaN(fuelEnd)) {
+        alert("Silakan masukkan nilai bahan bakar yang valid!");
+        return;
+    }
 
     let duration = endH - startH;
     if (duration <= 0) duration += 24; 
@@ -42,6 +67,11 @@ calcForm.addEventListener('submit', (e) => {
     
     document.getElementById('result').innerText = `Pemakaian: ${consumption.toFixed(2)} L/jam`;
     calcForm.reset();
+    // After reset, we need to make sure the selects return to the placeholder state
+    // Resetting usually puts it back to the first option, which is the placeholder now.
+    // However, let's explicitly set them to the placeholder to be sure.
+    document.getElementById('startTime').value = "";
+    document.getElementById('endTime').value = "";
 
     const entry = { time: `${startH}:00-${endH}:00`, consumption: consumption.toFixed(2) };
     const history = JSON.parse(localStorage.getItem('fuelHistory') || '[]');
