@@ -71,8 +71,10 @@ meterForm.addEventListener('submit', (e) => {
     
     // Intermediate hours
     for (let i = 1; i <= numFullHours; i++) {
-        let currentTime = new Date(0, 0, 0, sH + i, sM);
-        let timeStr = currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        // Robustly calculate time considering 24h wrap
+        let totalHoursFromStart = sH + i;
+        let hour = totalHoursFromStart % 24;
+        let timeStr = `${hour.toString().padStart(2, '0')}:${sM.toString().padStart(2, '0')}`;
         
         let usageThisHour = avgUsagePerHour; 
         cumulativeUsage += usageThisHour;
