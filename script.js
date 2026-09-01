@@ -54,7 +54,6 @@ calcForm.addEventListener('submit', (e) => {
     const fuelStart = parseFloat(document.getElementById('fuelStart').value);
     const fuelEnd = parseFloat(document.getElementById('fuelEnd').value);
     
-    // Validate numbers
     if (isNaN(fuelStart) || isNaN(fuelEnd)) {
         alert("Silakan masukkan nilai bahan bakar yang valid!");
         return;
@@ -63,17 +62,24 @@ calcForm.addEventListener('submit', (e) => {
     let duration = endH - startH;
     if (duration <= 0) duration += 24; 
 
-    const consumption = (fuelStart - fuelEnd) / duration;
+    const rate = (fuelEnd - fuelStart) / duration;
     
-    document.getElementById('result').innerText = `Pemakaian: ${consumption.toFixed(2)} L/jam`;
-    calcForm.reset();
-    // After reset, we need to make sure the selects return to the placeholder state
-    // Resetting usually puts it back to the first option, which is the placeholder now.
-    // However, let's explicitly set them to the placeholder to be sure.
+    let resultText = "";
+    if (rate < 0) {
+        resultText = `Pemakaian: ${Math.abs(rate).toFixed(2)} L/jam`;
+    } else if (rate > 0) {
+        resultText = `Peningkatan: ${rate.toFixed(2)} L/jam`;
+    } else {
+        resultText = "Tidak ada perubahan";
+    }
+    
+    document.getElementById('result').innerText = resultText;
     document.getElementById('startTime').value = "";
     document.getElementById('endTime').value = "";
+    document.getElementById('fuelStart').value = "";
+    document.getElementById('fuelEnd').value = "";
 
-    const entry = { time: `${startH}:00-${endH}:00`, consumption: consumption.toFixed(2) };
+    const entry = { time: `${startH}:00-${endH}:00`, rate: rate.toFixed(2) };
     const history = JSON.parse(localStorage.getItem('fuelHistory') || '[]');
     history.push(entry);
     localStorage.setItem('fuelHistory', JSON.stringify(history));
@@ -81,18 +87,22 @@ calcForm.addEventListener('submit', (e) => {
     renderChart();
 });
 
+function renderHistory() {
+    const history = JSON.parse(localStorage.getItem('fuelHistory') || '[]');
+    historyTable.innerHTML = history.map(h => {
+        const val = parseFloat(h.rate);
+        const type = val < 0 ? 'Pemakaian' : (val > 0 ? 'Peningkatan' : 'Stabil');
+        return `<tr><td>${h.time}</td><td>${Math.abs(val).toFixed(2)} L/jam (${type})</td></tr>`;
+    }).join('');
+    if(history.length > 0) {
+        historyTable.innerHTML += `<tr><td colspan="2"><button onclick="clearHistory()" style="background:#dc3545">Hapus Riwayat</button></td></tr>`;
+    }
+}
+
 function clearHistory() {
     localStorage.removeItem('fuelHistory');
     renderHistory();
     renderChart();
-}
-
-function renderHistory() {
-    const history = JSON.parse(localStorage.getItem('fuelHistory') || '[]');
-    historyTable.innerHTML = history.map(h => `<tr><td>${h.time}</td><td>${h.consumption} L/jam</td></tr>`).join('');
-    if(history.length > 0) {
-        historyTable.innerHTML += `<tr><td colspan="2"><button onclick="clearHistory()" style="background:#dc3545">Hapus Riwayat</button></td></tr>`;
-    }
 }
 
 function renderChart() {
@@ -105,8 +115,8 @@ function renderChart() {
         data: {
             labels: history.map((_, i) => i + 1),
             datasets: [{ 
-                label: 'Pemakaian (L/jam)', 
-                data: history.map(h => h.consumption),
+                label: 'Laju Perubahan (L/jam)', 
+                data: history.map(h => h.rate),
                 borderColor: '#00d4ff',
                 backgroundColor: 'rgba(0, 212, 255, 0.1)',
                 tension: 0.1
@@ -114,7 +124,13 @@ function renderChart() {
         },
         options: { 
             responsive: true,
-            scales: { y: { ticks: { color: 'white' } }, x: { ticks: { color: 'white' } } }
+            scales: { 
+                y: { 
+                    ticks: { color: 'white' },
+                    beginAtZero: false 
+                }, 
+                x: { ticks: { color: 'white' } } 
+            }
         }
     });
 }
