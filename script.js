@@ -5,6 +5,7 @@ const resultsArea = document.getElementById('resultsArea');
 const resultTable = document.getElementById('resultTable').querySelector('tbody');
 
 let tableData = [];
+let usageChart = null;
 
 meterForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -77,7 +78,36 @@ meterForm.addEventListener('submit', (e) => {
     }
 
     resultsArea.style.display = 'block';
+    updateChart();
 });
+
+function updateChart() {
+    const ctx = document.getElementById('usageChart').getContext('2d');
+    if (usageChart) usageChart.destroy();
+    
+    usageChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: tableData.map(row => row.time),
+            datasets: [{
+                label: 'Angka Meter',
+                data: tableData.map(row => row.meter),
+                borderColor: '#00d4ff',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { ticks: { color: '#e0e0e0' } },
+                x: { ticks: { color: '#e0e0e0' } }
+            }
+        }
+    });
+}
+
 
 resetBtn.addEventListener('click', () => {
     meterForm.reset();

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kalkulator Pemakaian Meter</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -42,6 +43,11 @@
                 <div class="stat-card">Total Pemakaian: <span id="resTotal"></span></div>
                 <div class="stat-card">Durasi: <span id="resDuration"></span> Jam</div>
                 <div class="stat-card">Rata-rata: <span id="resAvg"></span>/jam</div>
+            </div>
+            
+            <div class="card">
+                <h2>Grafik Pemakaian</h2>
+                <canvas id="usageChart"></canvas>
             </div>
 
             <div class="card">
