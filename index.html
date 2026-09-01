@@ -6,20 +6,27 @@
     <title>Fuel Calc Pro</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 </head>
 <body>
-    <nav>
-        <button onclick="showTab('calculator')">Kalkulator</button>
-        <button onclick="showTab('history')">Riwayat</button>
-        <button onclick="showTab('chart')">Grafik</button>
+    <div id="particles-js"></div>
+
+    <nav class="sticky-nav">
+        <a href="#calculator">Kalkulator</a>
+        <a href="#history">Riwayat</a>
+        <a href="#chart">Grafik</a>
     </nav>
 
     <main>
-        <section id="calculator" class="tab-content">
+        <section id="calculator" class="content-section">
             <h2>Kalkulator</h2>
             <form id="calcForm">
-                <input type="time" id="startTime" required>
-                <input type="time" id="endTime" required>
+                <label for="startTime">Jam Mulai:</label>
+                <select id="startTime" required></select>
+                
+                <label for="endTime">Jam Selesai:</label>
+                <select id="endTime" required></select>
+                
                 <input type="number" id="fuelStart" placeholder="Bahan Bakar Awal (L)" step="0.01" required>
                 <input type="number" id="fuelEnd" placeholder="Bahan Bakar Akhir (L)" step="0.01" required>
                 <button type="submit">Hitung</button>
@@ -27,7 +34,7 @@
             <div id="result"></div>
         </section>
 
-        <section id="history" class="tab-content" style="display:none;">
+        <section id="history" class="content-section">
             <h2>Riwayat</h2>
             <table id="historyTable">
                 <thead>
@@ -40,7 +47,7 @@
             </table>
         </section>
 
-        <section id="chart" class="tab-content" style="display:none;">
+        <section id="chart" class="content-section">
             <h2>Grafik Pemakaian</h2>
             <canvas id="fuelChart"></canvas>
         </section>
