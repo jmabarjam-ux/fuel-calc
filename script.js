@@ -48,41 +48,32 @@ meterForm.addEventListener('submit', (e) => {
     tableData = [];
     resultTable.innerHTML = '';
     
-    let currentMeter = meterStart;
     let cumulativeUsage = 0;
+    let numFullHours = Math.floor(durationHours);
     
-    // We need to iterate hourly
-    let numHours = Math.ceil(durationHours);
+    // Row 0: Start
+    tableData.push({ time: timeStart, meter: meterStart, usage: 0, cumulative: 0 });
+    resultTable.innerHTML += `<tr><td>${timeStart}</td><td>${meterStart.toFixed(2)}</td><td>0.00</td><td>0.00</td></tr>`;
     
-    for (let i = 0; i <= numHours; i++) {
-        let hourOffset = i;
-        let currentTime = new Date(0, 0, 0, sH, sM + (i * 60));
+    // Intermediate hours
+    for (let i = 1; i <= numFullHours; i++) {
+        let currentTime = new Date(0, 0, 0, sH + i, sM);
         let timeStr = currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         
-        let usageThisHour = 0;
-        let meterReading = 0;
+        let usageThisHour = avgUsagePerHour; 
+        cumulativeUsage += usageThisHour;
+        let meterReading = meterStart + cumulativeUsage;
         
-        if (i === 0) {
-            usageThisHour = 0;
-            meterReading = meterStart;
-        } else if (i === numHours) {
-            usageThisHour = totalUsage - cumulativeUsage;
-            meterReading = meterEnd;
-        } else {
-            usageThisHour = avgUsagePerHour;
-            cumulativeUsage += usageThisHour;
-            meterReading = meterStart + cumulativeUsage;
-        }
-        
-        tableData.push({ time: timeStr, meter: meterReading, usage: usageThisHour, cumulative: (meterReading - meterStart) });
-
-        let row = `<tr>
-            <td>${timeStr}</td>
-            <td>${meterReading.toFixed(2)}</td>
-            <td>${usageThisHour.toFixed(2)}</td>
-            <td>${(meterReading - meterStart).toFixed(2)}</td>
-        </tr>`;
-        resultTable.innerHTML += row;
+        tableData.push({ time: timeStr, meter: meterReading, usage: usageThisHour, cumulative: cumulativeUsage });
+        resultTable.innerHTML += `<tr><td>${timeStr}</td><td>${meterReading.toFixed(2)}</td><td>${usageThisHour.toFixed(2)}</td><td>${cumulativeUsage.toFixed(2)}</td></tr>`;
+    }
+    
+    // Last row (End) if not already added
+    if (durationHours > numFullHours) {
+        let usageLastHour = totalUsage - cumulativeUsage;
+        cumulativeUsage += usageLastHour;
+        tableData.push({ time: timeEnd, meter: meterEnd, usage: usageLastHour, cumulative: totalUsage });
+        resultTable.innerHTML += `<tr><td>${timeEnd}</td><td>${meterEnd.toFixed(2)}</td><td>${usageLastHour.toFixed(2)}</td><td>${totalUsage.toFixed(2)}</td></tr>`;
     }
 
     resultsArea.style.display = 'block';
