@@ -1,44 +1,35 @@
 // Supabase Initialization
-var supabaseClient = (typeof supabase !== 'undefined' && supabase.createClient) ? supabase.createClient(
+const mySupabase = (typeof supabase !== 'undefined' && supabase.createClient) ? supabase.createClient(
     'https://dpnerteilzewxvndziit.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I'
 ) : null;
-var supabase = supabaseClient;
 
-let dbReady = !!supabase;
-
+const dbReady = !!mySupabase;
 const logContent = document.getElementById('logContent');
+
 function log(msg) {
     const time = new Date().toLocaleTimeString();
     if(logContent) logContent.innerHTML += `<div>[${time}] ${msg}</div>`;
     console.log(msg);
 }
 
-if (dbReady) {
-    log('✅ Supabase ready');
-    document.getElementById('dbStatus').innerHTML = '<div class="status success">✅ Database connected</div>';
-    loadHistory();
-} else {
-    log('❌ Supabase not loaded');
-    document.getElementById('dbStatus').innerHTML = '<div class="status warning">⚠️ Offline mode - data tidak tersimpan</div>';
-}
-
-function setShift(start, end) {
+// Expose functions to window for onclick handlers
+window.setShift = function(start, end) {
     document.getElementById('timeStart').value = start;
     document.getElementById('timeEnd').value = end;
     log(`⏰ Shift: ${start}-${end}`);
-}
+};
 
-function resetForm() {
+window.resetForm = function() {
     document.getElementById('calcForm').reset();
     document.getElementById('results').classList.remove('show');
     log('🔄 Reset');
-}
+};
 
 async function loadHistory() {
     if (!dbReady) return;
     try {
-        const { data, error } = await supabase
+        const { data, error } = await mySupabase
             .from('shift_logs')
             .select('*')
             .order('created_at', { ascending: false })
@@ -63,11 +54,11 @@ async function loadHistory() {
     }
 }
 
-async function clearHistory() {
+window.clearHistory = async function() {
     if (!dbReady) return;
     if (!confirm('Hapus semua riwayat?')) return;
     try {
-        const { error } = await supabase
+        const { error } = await mySupabase
             .from('shift_logs')
             .delete()
             .neq('id', -1);
@@ -77,6 +68,15 @@ async function clearHistory() {
     } catch (e) {
         alert('Error: ' + e.message);
     }
+};
+
+if (dbReady) {
+    log('✅ Supabase ready');
+    document.getElementById('dbStatus').innerHTML = '<div class="status success">✅ Database connected</div>';
+    loadHistory();
+} else {
+    log('❌ Supabase not loaded');
+    document.getElementById('dbStatus').innerHTML = '<div class="status warning">⚠️ Offline mode - data tidak tersimpan</div>';
 }
 
 document.getElementById('calcForm').addEventListener('submit', async function(e) {
@@ -106,7 +106,7 @@ document.getElementById('calcForm').addEventListener('submit', async function(e)
         log(`💰 ${totalUsage} m³, ${durationHours.toFixed(2)}h, ${avgPerHour.toFixed(2)} m³/h`);
         
         if (dbReady) {
-            supabase.from('shift_logs').insert([{
+            mySupabase.from('shift_logs').insert([{
                 time_start: timeStart,
                 time_end: timeEnd,
                 meter_start: meterStart,
