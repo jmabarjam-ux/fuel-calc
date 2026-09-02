@@ -356,6 +356,58 @@ downloadBtn.addEventListener('click', () => {
     showToast("📥 CSV Gas Berhasil Didownload.");
 });
 
+// WhatsApp Share Button
+document.getElementById('shareWABtn').addEventListener('click', () => {
+    if (tableData.length === 0) {
+        alert('Belum ada data untuk di-share. Lakukan kalkulasi terlebih dahulu.');
+        return;
+    }
+    
+    // Ambil data summary
+    const totalUsage = document.getElementById('resTotal').innerText;
+    const duration = document.getElementById('resDuration').innerText;
+    const avgUsage = document.getElementById('resAvg').innerText;
+    const status = document.getElementById('shiftStatusBadge').innerText;
+    
+    // Get time range
+    const timeStart = tableData[0].time;
+    const timeEnd = tableData[tableData.length - 1].time;
+    
+    // Format message dengan peningkatan per jam
+    let message = `🔥 *LAPORAN PEMAKAIAN GAS*\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    message += `📅 *Periode:* ${timeStart} - ${timeEnd}\n`;
+    message += `⏱️ *Durasi:* ${duration} Jam\n`;
+    message += `📊 *Total:* ${totalUsage} m³\n`;
+    message += `📈 *Rata-rata:* ${avgUsage} m³/jam\n`;
+    message += `⚡ *Status:* ${status}\n\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `📋 *PEMAKAIAN PER JAM:*\n\n`;
+    
+    // Loop data, skip row pertama (jam awal = 0)
+    for (let i = 1; i < tableData.length; i++) {
+        const row = tableData[i];
+        const prevMeter = tableData[i-1].meter;
+        const increase = row.meter - prevMeter; // Peningkatan dari jam sebelumnya
+        
+        message += `🕐 *${row.time}*\n`;
+        message += `   Meter: ${row.meter.toFixed(2)} m³\n`;
+        message += `   Naik: +${increase.toFixed(2)} m³\n\n`;
+    }
+    
+    message += `━━━━━━━━━━━━━━━━━━━━━\n`;
+    message += `📱 _Gas Meter Calculator Pro_`;
+    
+    // Encode untuk WhatsApp URL
+    const encodedMessage = encodeURIComponent(message);
+    const waURL = `https://wa.me/?text=${encodedMessage}`;
+    
+    // Buka WhatsApp
+    window.open(waURL, '_blank');
+    
+    showToast("📱 Membuka WhatsApp...");
+});
+
 printBtn.addEventListener('click', () => {
     window.print();
 });
