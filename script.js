@@ -273,38 +273,65 @@ meterForm.addEventListener('submit', async (e) => {
 });
 
 function updateChart() {
-    const ctx = document.getElementById('usageChart').getContext('2d');
-    if (usageChart) usageChart.destroy();
-    
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#f1f5f9' : '#1e293b';
-    const gridColor = isDark ? '#334155' : '#e2e8f0';
-
-    usageChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: tableData.map(row => row.time),
-            datasets: [{
-                label: 'Meter Gas (m³)',
-                data: tableData.map(row => row.meter),
-                borderColor: '#ff6600',
-                backgroundColor: 'rgba(255, 102, 0, 0.1)',
-                fill: true,
-                tension: 0.1,
-                borderWidth: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { ticks: { color: textColor }, grid: { color: gridColor } },
-                x: { ticks: { color: textColor }, grid: { color: gridColor } }
-            },
-            plugins: {
-                legend: { labels: { color: textColor } }
+    try {
+        const canvas = document.getElementById('usageChart');
+        if (!canvas) {
+            console.warn('Chart canvas not found');
+            return;
+        }
+        
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.warn('Chart.js not loaded, skipping chart');
+            return;
+        }
+        
+        const ctx = canvas.getContext('2d');
+        if (usageChart) {
+            try {
+                usageChart.destroy();
+            } catch (e) {
+                console.warn('Error destroying chart:', e);
             }
         }
-    });
+        
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#f1f5f9' : '#1e293b';
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+        usageChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: tableData.map(row => row.time),
+                datasets: [{
+                    label: 'Meter Gas (m³)',
+                    data: tableData.map(row => row.meter),
+                    borderColor: '#ff6600',
+                    backgroundColor: 'rgba(255, 102, 0, 0.1)',
+                    fill: true,
+                    tension: 0.1,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } }
+                },
+                plugins: {
+                    legend: { labels: { color: textColor } }
+                }
+            }
+        });
+        
+        console.log('✅ Chart updated');
+        mlog('✅ Chart ready');
+    } catch (error) {
+        console.error('❌ Chart error:', error);
+        mlog('❌ Chart error: ' + error.message);
+        // Don't throw - chart is optional
+    }
 }
 
 async function renderShiftHistory() {
