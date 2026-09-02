@@ -156,6 +156,7 @@ async function renderCharts() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false,
                     plugins: { legend: { display: false } }, // Sembunyikan legenda
                     scales: { 
                         x: { display: false, grid: { display: false }}, // Sembunyikan grid/label X
@@ -185,6 +186,7 @@ async function renderCharts() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: false,
                     plugins: { legend: { display: false } },
                     scales: { 
                         x: { display: false, grid: { display: false }},
