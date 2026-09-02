@@ -2,196 +2,296 @@
 <html lang="id" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Gas Meter Calculator Pro</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gas Meter Calculator - Emergency Version</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #000 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { color: #00f2ff; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #a0aec0; margin-bottom: 30px; font-size: 14px; }
+        
+        .shifts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .btn-shift {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-shift:active { background: #00f2ff; color: #000; transform: scale(0.95); }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; color: #a0aec0; font-size: 13px; margin-bottom: 5px; font-weight: 600; }
+        input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+        }
+        input:focus { outline: none; border-color: #00f2ff; background: rgba(255,255,255,0.08); }
+        
+        .buttons { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn-primary {
+            background: linear-gradient(90deg, #00f2ff, #d946ef);
+            color: #fff;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        .results.show { display: block; }
+        
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stat-card {
+            background: rgba(20,20,30,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-label { font-size: 11px; color: #a0aec0; margin-bottom: 5px; text-transform: uppercase; }
+        .stat-value { font-size: 22px; font-weight: 800; color: #00f2ff; }
+        
+        .table-container {
+            background: rgba(20,20,30,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(255,255,255,0.05); padding: 12px; text-align: left; font-size: 12px; color: #a0aec0; }
+        td { padding: 12px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        
+        .log {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.95);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 2px solid #0f0;
+        }
+        .log-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: #f00;
+            color: #fff;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <div id="particles-js"></div>
     <div class="container">
-        <header class="main-header">
-            <div class="header-content">
-                <div class="header-top">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="header-logo" id="themeIcon">🔥</span>
-                        <div class="live-indicator">
-                            <span class="pulse-dot"></span>
-                            <span class="live-text" id="themeStatusText">ONLINE</span>
-                        </div>
-                    </div>
-                </div>
-                <h1>Monitoring Pemakaian Meter Gas Pro</h1>
-                <p class="header-subtitle">Panel Kontrol Shift Gas, Estimasi Biaya (m³) & Kalkulasi Otomatis</p>
-            </div>
-        </header>
+        <h1>🔥 Monitoring Pemakaian Meter Gas</h1>
+        <p class="subtitle">Emergency Version - Pure JavaScript</p>
         
-        <div class="card">
-            <div class="quick-shifts">
-                <button type="button" class="btn-shift" onclick="setShift('07:00', '15:00')">🌅 Shift Pagi (07-15)</button>
-                <button type="button" class="btn-shift" onclick="setShift('15:00', '23:00')">☀️ Shift Sore (15-23)</button>
-                <button type="button" class="btn-shift" onclick="setShift('23:00', '07:00')">🌙 Shift Malam (23-07)</button>
-            </div>
-            <form id="meterForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Angka Meter Gas Awal (m³)</label>
-                        <input type="number" id="meterStart" step="any" inputmode="decimal" required placeholder="Contoh: 1500.50">
-                    </div>
-                    <div class="form-group">
-                        <label>Waktu Awal</label>
-                        <input type="time" id="timeStart" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Angka Meter Gas Akhir (m³)</label>
-                        <input type="number" id="meterEnd" step="any" inputmode="decimal" required placeholder="Contoh: 1650.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Waktu Akhir</label>
-                        <input type="time" id="timeEnd" required>
-                    </div>
-                </div>
-                <div class="actions">
-                    <button type="submit" class="btn-primary">Hitung & Simpan</button>
-                    <button type="button" id="resetBtn" class="btn-secondary">Reset</button>
-                </div>
-            </form>
+        <div class="shifts">
+            <button class="btn-shift" onclick="setShift('07:00','15:00')">🌅 Pagi (07-15)</button>
+            <button class="btn-shift" onclick="setShift('15:00','23:00')">☀️ Sore (15-23)</button>
+            <button class="btn-shift" onclick="setShift('23:00','07:00')">🌙 Malam (23-07)</button>
         </div>
-
-        <div id="resultsArea" style="display:none;">
-            <div class="stats-grid">
+        
+        <form id="calcForm">
+            <div class="form-group">
+                <label>Angka Meter Gas Awal (m³)</label>
+                <input type="number" id="meterStart" step="any" required placeholder="123">
+            </div>
+            <div class="form-group">
+                <label>Waktu Awal</label>
+                <input type="time" id="timeStart" required>
+            </div>
+            <div class="form-group">
+                <label>Angka Meter Gas Akhir (m³)</label>
+                <input type="number" id="meterEnd" step="any" required placeholder="456">
+            </div>
+            <div class="form-group">
+                <label>Waktu Akhir</label>
+                <input type="time" id="timeEnd" required>
+            </div>
+            <div class="buttons">
+                <button type="submit" class="btn-primary">🔥 Hitung & Simpan</button>
+                <button type="button" class="btn-secondary" onclick="resetForm()">Reset</button>
+            </div>
+        </form>
+        
+        <div class="results" id="results">
+            <div class="stats">
                 <div class="stat-card">
-                    <span class="stat-label">Total Pemakaian Gas</span>
-                    <span class="stat-value"><span id="resTotal">0</span> m³</span>
+                    <div class="stat-label">Total Pemakaian</div>
+                    <div class="stat-value"><span id="resTotal">0</span> m³</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Durasi</span>
-                    <span class="stat-value"><span id="resDuration">0</span> Jam</span>
+                    <div class="stat-label">Durasi</div>
+                    <div class="stat-value"><span id="resDuration">0</span> Jam</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Rata-rata</span>
-                    <span class="stat-value"><span id="resAvg">0</span> m³/jam</span>
-                </div>
-                <div class="stat-card" style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: rgba(255,100,0,0.05);">
-                    <span style="font-weight: 500;">Status Aliran Gas:</span>
-                    <span id="shiftStatusBadge" style="background: rgba(0,255,128,0.2); color: #00ff80; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;">Optimal</span>
+                    <div class="stat-label">Rata-rata</div>
+                    <div class="stat-value"><span id="resAvg">0</span> m³/jam</div>
                 </div>
             </div>
             
-            <div class="card chart-wrapper">
-                <h2>Grafik Pemakaian Gas (m³)</h2>
-                <canvas id="usageChart"></canvas>
-            </div>
-
-            <div class="card">
-                <div class="table-actions" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-                    <h2 style="margin: 0;">Tabel Perkembangan Gas</h2>
-                    <div style="display: flex; gap: 8px;">
-                        <button id="shareWABtn" class="btn-secondary" style="background: #25D366;">📱 Share WA</button>
-                        <button id="printBtn" class="btn-secondary" style="background: #4a5568;">Cetak / PDF</button>
-                        <button id="downloadBtn" class="btn-export">Download CSV</button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table id="resultTable">
-                        <thead>
-                            <tr>
-                                <th>Jam</th>
-                                <th>Meter Gas (m³)</th>
-                                <th>Pemakaian (m³/jam)</th>
-                                <th>Kumulatif (m³)</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" id="historyLogCard" style="display:none;">
-            <div class="table-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h2 style="margin: 0; color: var(--accent);">Log Riwayat Shift Gas</h2>
-                <div style="display: flex; gap: 8px;">
-                    <button id="exportHistoryBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 13px; background: #3b82f6;">Export JSON</button>
-                    <button id="clearHistoryBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 13px; background: #ef4444;">Hapus Log</button>
-                </div>
-            </div>
             <div class="table-container">
-                <table id="historyLogTable">
+                <table>
                     <thead>
                         <tr>
-                            <th>Waktu Submit</th>
-                            <th>Rentang Waktu</th>
-                            <th>Meter Gas (Awal → Akhir)</th>
-                            <th>Total (m³)</th>
+                            <th>Jam</th>
+                            <th>Meter (m³)</th>
+                            <th>Pakai/jam</th>
+                            <th>Kumulatif</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody id="tableBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
-    <div id="loader" class="loader" style="display:none;">Memuat data...</div>
-    <div id="toast" class="toast">🔥 Kalkulasi Gas berhasil disimpan!</div>
     
-    <!-- Mobile Debug Console (hapus nanti kalau sudah fix) -->
-    <div id="mobileDebug" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.9); color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; max-height: 150px; overflow-y: auto; z-index: 9999; display: none; border-top: 2px solid #0f0;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <strong>🐛 DEBUG LOG</strong>
-            <button onclick="document.getElementById('mobileDebug').style.display='none'" style="background: #f00; color: #fff; border: none; padding: 2px 8px; border-radius: 3px;">X</button>
-        </div>
-        <div id="debugLog"></div>
+    <div class="log" id="log">
+        <button class="log-close" onclick="document.getElementById('log').style.display='none'">X</button>
+        <div id="logContent"></div>
     </div>
     
-    <script src="script.js"></script>
     <script>
-        // Mobile debug helper
-        const debugLog = document.getElementById('debugLog');
-        const mobileDebug = document.getElementById('mobileDebug');
-        
-        function mlog(msg) {
+        const logContent = document.getElementById('logContent');
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logContent.innerHTML += `<div>[${time}] ${msg}</div>`;
             console.log(msg);
-            if (debugLog) {
-                const time = new Date().toLocaleTimeString();
-                debugLog.innerHTML += `<div>[${time}] ${msg}</div>`;
-                mobileDebug.style.display = 'block';
-                debugLog.scrollTop = debugLog.scrollHeight;
-            }
         }
         
-        // Make mlog globally accessible
-        window.mlog = mlog;
+        log('🚀 Page loaded - Emergency version');
         
-        // Intercept console
-        const origLog = console.log;
-        const origError = console.error;
-        const origWarn = console.warn;
+        function setShift(start, end) {
+            document.getElementById('timeStart').value = start;
+            document.getElementById('timeEnd').value = end;
+            log(`⏰ Shift set: ${start} - ${end}`);
+        }
         
-        console.log = function(...args) {
-            origLog.apply(console, args);
-            mlog(args.join(' '));
-        };
+        function resetForm() {
+            document.getElementById('calcForm').reset();
+            document.getElementById('results').classList.remove('show');
+            log('🔄 Form reset');
+        }
         
-        console.error = function(...args) {
-            origError.apply(console, args);
-            mlog('<span style="color:#f00">❌ ' + args.join(' ') + '</span>');
-        };
+        document.getElementById('calcForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            log('🔵 Form submitted');
+            
+            try {
+                const meterStart = parseFloat(document.getElementById('meterStart').value);
+                const meterEnd = parseFloat(document.getElementById('meterEnd').value);
+                const timeStart = document.getElementById('timeStart').value;
+                const timeEnd = document.getElementById('timeEnd').value;
+                
+                log(`📊 Data: ${meterStart} → ${meterEnd}, ${timeStart} → ${timeEnd}`);
+                
+                if (meterEnd <= meterStart) {
+                    alert('Meter akhir harus lebih besar dari meter awal!');
+                    log('❌ Validation failed');
+                    return;
+                }
+                
+                const totalUsage = meterEnd - meterStart;
+                log(`💰 Total: ${totalUsage} m³`);
+                
+                const [sH, sM] = timeStart.split(':').map(Number);
+                const [eH, eM] = timeEnd.split(':').map(Number);
+                
+                let startMin = sH * 60 + sM;
+                let endMin = eH * 60 + eM;
+                if (endMin <= startMin) endMin += 24 * 60;
+                
+                const durationMin = endMin - startMin;
+                const durationHours = durationMin / 60;
+                const avgPerHour = totalUsage / durationHours;
+                
+                log(`⏱️ Duration: ${durationHours.toFixed(2)}h, Avg: ${avgPerHour.toFixed(2)} m³/h`);
+                
+                // Display stats
+                document.getElementById('resTotal').textContent = totalUsage.toFixed(2);
+                document.getElementById('resDuration').textContent = durationHours.toFixed(2);
+                document.getElementById('resAvg').textContent = avgPerHour.toFixed(2);
+                
+                // Generate table
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                
+                let cumulative = 0;
+                const numHours = Math.floor(durationHours);
+                
+                // Starting row
+                tbody.innerHTML += `<tr><td>${timeStart}</td><td>${meterStart.toFixed(2)}</td><td>0.00</td><td>0.00</td></tr>`;
+                
+                // Hourly rows
+                for (let i = 1; i <= numHours; i++) {
+                    const hourTime = ((sH + i) % 24).toString().padStart(2, '0') + ':' + sM.toString().padStart(2, '0');
+                    cumulative += avgPerHour;
+                    const currentMeter = meterStart + cumulative;
+                    tbody.innerHTML += `<tr><td>${hourTime}</td><td>${currentMeter.toFixed(2)}</td><td>${avgPerHour.toFixed(2)}</td><td>${cumulative.toFixed(2)}</td></tr>`;
+                }
+                
+                // Last row if partial hour
+                if (durationHours > numHours) {
+                    const lastUsage = totalUsage - cumulative;
+                    tbody.innerHTML += `<tr><td>${timeEnd}</td><td>${meterEnd.toFixed(2)}</td><td>${lastUsage.toFixed(2)}</td><td>${totalUsage.toFixed(2)}</td></tr>`;
+                }
+                
+                log('📊 Table generated');
+                
+                // Show results
+                document.getElementById('results').classList.add('show');
+                log('✅ DONE! Results displayed');
+                
+                // Reset form
+                this.reset();
+                
+            } catch (error) {
+                log('❌ ERROR: ' + error.message);
+                alert('ERROR: ' + error.message);
+            }
+        });
         
-        console.warn = function(...args) {
-            origWarn.apply(console, args);
-            mlog('<span style="color:#ff0">⚠️ ' + args.join(' ') + '</span>');
-        };
-        
-        // Catch all errors
-        window.onerror = function(msg, url, line, col, error) {
-            mlog('<span style="color:#f00">💥 ERROR: ' + msg + ' at line ' + line + '</span>');
-            return false;
-        };
-        
-        mlog('🚀 Page loaded');
+        log('✅ Ready');
     </script>
 </body>
 </html>

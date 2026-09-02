@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gas Meter Calculator Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="container">
+        <header class="main-header">
+            <div class="header-content">
+                <div class="header-top">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="header-logo" id="themeIcon">🔥</span>
+                        <div class="live-indicator">
+                            <span class="pulse-dot"></span>
+                            <span class="live-text" id="themeStatusText">ONLINE</span>
+                        </div>
+                    </div>
+                </div>
+                <h1>Monitoring Pemakaian Meter Gas Pro</h1>
+                <p class="header-subtitle">Panel Kontrol Shift Gas, Estimasi Biaya (m³) & Kalkulasi Otomatis</p>
+            </div>
+        </header>
+        
+        <div class="card">
+            <div class="quick-shifts">
+                <button type="button" class="btn-shift" onclick="setShift('07:00', '15:00')">🌅 Shift Pagi (07-15)</button>
+                <button type="button" class="btn-shift" onclick="setShift('15:00', '23:00')">☀️ Shift Sore (15-23)</button>
+                <button type="button" class="btn-shift" onclick="setShift('23:00', '07:00')">🌙 Shift Malam (23-07)</button>
+            </div>
+            <form id="meterForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Angka Meter Gas Awal (m³)</label>
+                        <input type="number" id="meterStart" step="any" inputmode="decimal" required placeholder="Contoh: 1500.50">
+                    </div>
+                    <div class="form-group">
+                        <label>Waktu Awal</label>
+                        <input type="time" id="timeStart" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Angka Meter Gas Akhir (m³)</label>
+                        <input type="number" id="meterEnd" step="any" inputmode="decimal" required placeholder="Contoh: 1650.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Waktu Akhir</label>
+                        <input type="time" id="timeEnd" required>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn-primary">Hitung & Simpan</button>
+                    <button type="button" id="resetBtn" class="btn-secondary">Reset</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="resultsArea" style="display:none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Total Pemakaian Gas</span>
+                    <span class="stat-value"><span id="resTotal">0</span> m³</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Durasi</span>
+                    <span class="stat-value"><span id="resDuration">0</span> Jam</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Rata-rata</span>
+                    <span class="stat-value"><span id="resAvg">0</span> m³/jam</span>
+                </div>
+                <div class="stat-card" style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: rgba(255,100,0,0.05);">
+                    <span style="font-weight: 500;">Status Aliran Gas:</span>
+                    <span id="shiftStatusBadge" style="background: rgba(0,255,128,0.2); color: #00ff80; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;">Optimal</span>
+                </div>
+            </div>
+            
+            <div class="card chart-wrapper">
+                <h2>Grafik Pemakaian Gas (m³)</h2>
+                <canvas id="usageChart"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="table-actions" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">Tabel Perkembangan Gas</h2>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="shareWABtn" class="btn-secondary" style="background: #25D366;">📱 Share WA</button>
+                        <button id="printBtn" class="btn-secondary" style="background: #4a5568;">Cetak / PDF</button>
+                        <button id="downloadBtn" class="btn-export">Download CSV</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="resultTable">
+                        <thead>
+                            <tr>
+                                <th>Jam</th>
+                                <th>Meter Gas (m³)</th>
+                                <th>Pemakaian (m³/jam)</th>
+                                <th>Kumulatif (m³)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="historyLogCard" style="display:none;">
+            <div class="table-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="margin: 0; color: var(--accent);">Log Riwayat Shift Gas</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button id="exportHistoryBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 13px; background: #3b82f6;">Export JSON</button>
+                    <button id="clearHistoryBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 13px; background: #ef4444;">Hapus Log</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="historyLogTable">
+                    <thead>
+                        <tr>
+                            <th>Waktu Submit</th>
+                            <th>Rentang Waktu</th>
+                            <th>Meter Gas (Awal → Akhir)</th>
+                            <th>Total (m³)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="loader" class="loader" style="display:none;">Memuat data...</div>
+    <div id="toast" class="toast">🔥 Kalkulasi Gas berhasil disimpan!</div>
+    
+    <!-- Mobile Debug Console (hapus nanti kalau sudah fix) -->
+    <div id="mobileDebug" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.9); color: #0f0; font-family: monospace; font-size: 11px; padding: 10px; max-height: 150px; overflow-y: auto; z-index: 9999; display: none; border-top: 2px solid #0f0;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <strong>🐛 DEBUG LOG</strong>
+            <button onclick="document.getElementById('mobileDebug').style.display='none'" style="background: #f00; color: #fff; border: none; padding: 2px 8px; border-radius: 3px;">X</button>
+        </div>
+        <div id="debugLog"></div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        // Mobile debug helper
+        const debugLog = document.getElementById('debugLog');
+        const mobileDebug = document.getElementById('mobileDebug');
+        
+        function mlog(msg) {
+            console.log(msg);
+            if (debugLog) {
+                const time = new Date().toLocaleTimeString();
+                debugLog.innerHTML += `<div>[${time}] ${msg}</div>`;
+                mobileDebug.style.display = 'block';
+                debugLog.scrollTop = debugLog.scrollHeight;
+            }
+        }
+        
+        // Make mlog globally accessible
+        window.mlog = mlog;
+        
+        // Intercept console
+        const origLog = console.log;
+        const origError = console.error;
+        const origWarn = console.warn;
+        
+        console.log = function(...args) {
+            origLog.apply(console, args);
+            mlog(args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            origError.apply(console, args);
+            mlog('<span style="color:#f00">❌ ' + args.join(' ') + '</span>');
+        };
+        
+        console.warn = function(...args) {
+            origWarn.apply(console, args);
+            mlog('<span style="color:#ff0">⚠️ ' + args.join(' ') + '</span>');
+        };
+        
+        // Catch all errors
+        window.onerror = function(msg, url, line, col, error) {
+            mlog('<span style="color:#f00">💥 ERROR: ' + msg + ' at line ' + line + '</span>');
+            return false;
+        };
+        
+        mlog('🚀 Page loaded');
+    </script>
+</body>
+</html>
