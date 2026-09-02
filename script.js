@@ -47,16 +47,28 @@ particlesJS("particles-js", {
 
 // Initialize localStorage check on load
 window.addEventListener('DOMContentLoaded', () => {
+    // Load last meter reading
     const lastMeter = localStorage.getItem('lastMeterReadingGas');
     if (lastMeter !== null) {
         document.getElementById('meterStart').value = lastMeter;
         document.getElementById('autoFillBadge').style.display = 'inline-block';
     }
+    
+    // Load saved form data
+    const savedFormData = JSON.parse(localStorage.getItem('formDataGas') || '{}');
+    for (const key in savedFormData) {
+        const input = document.getElementById(key);
+        if (input) input.value = savedFormData[key];
+    }
+    
     renderShiftHistory();
 });
 
-document.getElementById('meterStart').addEventListener('input', () => {
-    document.getElementById('autoFillBadge').style.display = 'none';
+// Save form data on input change
+document.getElementById('meterForm').addEventListener('input', (e) => {
+    const formData = JSON.parse(localStorage.getItem('formDataGas') || '{}');
+    formData[e.target.id] = e.target.value;
+    localStorage.setItem('formDataGas', JSON.stringify(formData));
 });
 
 meterForm.addEventListener('submit', (e) => {
@@ -92,6 +104,10 @@ meterForm.addEventListener('submit', (e) => {
     if (historyLog.length > 25) historyLog.pop();
     localStorage.setItem('shiftHistoryLogGas', JSON.stringify(historyLog));
     renderShiftHistory();
+
+    // Clear saved form data
+    localStorage.removeItem('formDataGas');
+    meterForm.reset();
 
     // Parse times
     const [sH, sM] = timeStart.split(':').map(Number);
@@ -269,6 +285,7 @@ printBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', () => {
     meterForm.reset();
+    localStorage.removeItem('formDataGas');
     resultsArea.style.display = 'none';
 });
 
