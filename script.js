@@ -39,6 +39,11 @@ function setShift(start, end) {
     document.getElementById('timeEnd').value = end;
 }
 
+function setShift(start, end) {
+    document.getElementById('timeStart').value = start;
+    document.getElementById('timeEnd').value = end;
+}
+
 particlesJS("particles-js", {
     "particles": {
         "number": { "value": 50, "density": { "enable": true, "value_area": 800 } },
