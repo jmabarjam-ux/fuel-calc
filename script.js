@@ -7,11 +7,9 @@ const resultTable = document.getElementById('resultTable').querySelector('tbody'
 const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
 // Supabase Initialization
-const { createClient } = supabase;
-const supabaseClient = createClient(
-    'https://dpnerteilzewxvndziit.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I'
-);
+const supabaseUrl = 'https://dpnerteilzewxvndziit.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I';
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let tableData = [];
 let usageChart = null;
