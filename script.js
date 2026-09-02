@@ -6,6 +6,9 @@ const resultsArea = document.getElementById('resultsArea');
 const resultTable = document.getElementById('resultTable').querySelector('tbody');
 const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
+// Supabase Initialization
+const supabase = supabase.createClient('https://dpnerteilzewxvndziit.supabase.co', 'sb_publishable_ep14e6P_0pZNgIGmJ5ExYQ_ssPAduNW');
+
 let tableData = [];
 let usageChart = null;
 
@@ -71,7 +74,7 @@ document.getElementById('meterForm').addEventListener('input', (e) => {
     localStorage.setItem('formDataGas', JSON.stringify(formData));
 });
 
-meterForm.addEventListener('submit', (e) => {
+meterForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const meterStart = parseFloat(document.getElementById('meterStart').value);
@@ -79,6 +82,7 @@ meterForm.addEventListener('submit', (e) => {
     const timeStart = document.getElementById('timeStart').value;
     const timeEnd = document.getElementById('timeEnd').value;
     const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+    const shiftNote = document.getElementById('shiftNote').value;
 
     if (meterEnd < meterStart) {
         alert("Angka meter gas akhir tidak boleh lebih kecil dari meter awal.");
@@ -90,19 +94,25 @@ meterForm.addEventListener('submit', (e) => {
     const totalUsage = meterEnd - meterStart;
     const totalCost = totalUsage * unitPrice;
 
-    // Save to shift history log
-    const shiftNote = document.getElementById('shiftNote').value;
-    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogGas') || '[]');
-    historyLog.unshift({
-        submitTime: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
-        range: `${timeStart} - ${timeEnd}`,
-        meterRange: `${meterStart.toFixed(2)} → ${meterEnd.toFixed(2)} m³`,
-        total: `${totalUsage.toFixed(2)} m³`,
-        cost: unitPrice > 0 ? `Rp ${totalCost.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '-',
-        note: shiftNote || '-'
-    });
-    if (historyLog.length > 25) historyLog.pop();
-    localStorage.setItem('shiftHistoryLogGas', JSON.stringify(historyLog));
+    // Save to Supabase
+    const { error } = await supabase
+        .from('shift_logs')
+        .insert([{
+            time_start: timeStart,
+            time_end: timeEnd,
+            meter_start: meterStart,
+            meter_end: meterEnd,
+            total_usage: totalUsage,
+            cost: totalCost,
+            note: shiftNote
+        }]);
+
+    if (error) {
+        console.error('Error saving data:', error);
+        alert("Gagal menyimpan data ke database.");
+        return;
+    }
+    
     renderShiftHistory();
 
     // Clear saved form data
@@ -110,6 +120,7 @@ meterForm.addEventListener('submit', (e) => {
     meterForm.reset();
 
     // Parse times
+
     const [sH, sM] = timeStart.split(':').map(Number);
     const [eH, eM] = timeEnd.split(':').map(Number);
 
@@ -223,12 +234,16 @@ function updateChart() {
     });
 }
 
-function renderShiftHistory() {
-    const historyLog = JSON.parse(localStorage.getItem('shiftHistoryLogGas') || '[]');
+async function renderShiftHistory() {
     const historyCard = document.getElementById('historyLogCard');
     const tbody = document.getElementById('historyLogTable').querySelector('tbody');
     
-    if (historyLog.length === 0) {
+    const { data: historyLog, error } = await supabase
+        .from('shift_logs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error || !historyLog || historyLog.length === 0) {
         historyCard.style.display = 'none';
         return;
     }
@@ -236,27 +251,45 @@ function renderShiftHistory() {
     historyCard.style.display = 'block';
     tbody.innerHTML = historyLog.map(log => `
         <tr>
-            <td>${log.submitTime}</td>
-            <td>${log.range}</td>
-            <td>${log.meterRange}</td>
-            <td style="color: #ff9900; font-weight: bold;">${log.total}</td>
-            <td style="color: #10b981; font-weight: bold;">${log.cost}</td>
-            <td>${log.note}</td>
+            <td>${new Date(log.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</td>
+            <td>${log.time_start} - ${log.time_end}</td>
+            <td>${log.meter_start.toFixed(2)} → ${log.meter_end.toFixed(2)} m³</td>
+            <td style="color: #ff9900; font-weight: bold;">${log.total_usage.toFixed(2)} m³</td>
+            <td style="color: #10b981; font-weight: bold;">${log.cost > 0 ? 'Rp ' + log.cost.toLocaleString('id-ID', { minimumFractionDigits: 2 }) : '-'}</td>
+            <td>${log.note || '-'}</td>
         </tr>
     `).join('');
 }
 
-document.getElementById('clearHistoryBtn').addEventListener('click', () => {
-    if (confirm("Yakin ingin menghapus seluruh log riwayat shift gas?")) {
-        localStorage.removeItem('shiftHistoryLogGas');
+document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
+    if (confirm("Yakin ingin menghapus seluruh log riwayat shift gas dari database?")) {
+        const { error } = await supabase
+            .from('shift_logs')
+            .delete()
+            .neq('id', 0); // Hack to delete all, assuming id > 0
+
+        if (error) {
+            console.error('Error clearing history:', error);
+            alert("Gagal menghapus log.");
+            return;
+        }
+
         renderShiftHistory();
         showToast("🗑️ Log riwayat gas dibersihkan.");
     }
 });
 
-exportHistoryBtn.addEventListener('click', () => {
-    const historyLog = localStorage.getItem('shiftHistoryLogGas') || '[]';
-    const blob = new Blob([historyLog], { type: "application/json" });
+exportHistoryBtn.addEventListener('click', async () => {
+    const { data: historyLog, error } = await supabase
+        .from('shift_logs')
+        .select('*');
+
+    if (error) {
+        alert("Gagal mengambil data untuk export.");
+        return;
+    }
+    
+    const blob = new Blob([JSON.stringify(historyLog)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
