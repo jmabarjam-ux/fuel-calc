@@ -66,30 +66,10 @@ if (typeof particlesJS !== 'undefined') {
     console.warn('ParticlesJS library not loaded');
 }
 
-// Initialize localStorage check on load
+// Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
-    // Load last meter reading
-    const lastMeter = localStorage.getItem('lastMeterReadingGas');
-    if (lastMeter !== null) {
-        document.getElementById('meterStart').value = lastMeter;
-        document.getElementById('autoFillBadge').style.display = 'inline-block';
-    }
-    
-    // Load saved form data
-    const savedFormData = JSON.parse(localStorage.getItem('formDataGas') || '{}');
-    for (const key in savedFormData) {
-        const input = document.getElementById(key);
-        if (input) input.value = savedFormData[key];
-    }
-    
+    // Render history saja, TIDAK auto-fill meter awal
     renderShiftHistory();
-});
-
-// Save form data on input change
-document.getElementById('meterForm').addEventListener('input', (e) => {
-    const formData = JSON.parse(localStorage.getItem('formDataGas') || '{}');
-    formData[e.target.id] = e.target.value;
-    localStorage.setItem('formDataGas', JSON.stringify(formData));
 });
 
 meterForm.addEventListener('submit', async (e) => {
@@ -109,8 +89,6 @@ meterForm.addEventListener('submit', async (e) => {
             alert("Angka meter gas akhir tidak boleh lebih kecil dari meter awal.");
             return;
         }
-
-        localStorage.setItem('lastMeterReadingGas', meterEnd);
 
         const totalUsage = meterEnd - meterStart;
 
@@ -229,8 +207,7 @@ meterForm.addEventListener('submit', async (e) => {
         
         showToast("🔥 Kalkulasi Pemakaian Gas berhasil dicatat!");
 
-        // Clear saved form data and reset (DI AKHIR)
-        localStorage.removeItem('formDataGas');
+        // Reset form
         meterForm.reset();
         
         console.log('✅ Done!');
@@ -385,7 +362,6 @@ printBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', () => {
     meterForm.reset();
-    localStorage.removeItem('formDataGas');
     resultsArea.style.display = 'none';
 });
 
