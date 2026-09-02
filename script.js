@@ -138,12 +138,12 @@ async function renderCharts() {
                 }]},
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     animation: false,
                     plugins: { legend: { display: false } },
                     scales: { 
-                        x: { display: false },
-                        y: { display: false, beginAtZero: true }
+                        x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }},
+                        y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
                     }
                 }
             });
