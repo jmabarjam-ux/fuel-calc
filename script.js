@@ -1,8 +1,11 @@
 // Supabase Initialization
-const supabase = (window.supabase) ? window.supabase.createClient(
-    'https://dpnerteilzewxvndziit.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I'
-) : null;
+if (typeof supabase === 'undefined') {
+    window.supabase = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(
+        'https://dpnerteilzewxvndziit.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I'
+    ) : null;
+    var supabase = window.supabase;
+}
 
 let dbReady = !!supabase;
 
