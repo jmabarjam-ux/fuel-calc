@@ -7,6 +7,9 @@ const mySupabase = (typeof supabase !== 'undefined' && supabase.createClient) ? 
 const dbReady = !!mySupabase;
 const logContent = document.getElementById('logContent');
 
+let trendChart = null;
+let shiftChart = null;
+
 function log(msg) {
     const time = new Date().toLocaleTimeString();
     if(logContent) logContent.innerHTML += `<div>[${time}] ${msg}</div>`;
@@ -49,6 +52,7 @@ async function loadHistory() {
             document.getElementById('history').style.display = 'block';
             log(`📊 Loaded ${data.length} history records`);
         }
+        await renderCharts();
     } catch (e) {
         log('⚠️ History load failed: ' + e.message);
     }
@@ -69,6 +73,90 @@ window.clearHistory = async function() {
         alert('Error: ' + e.message);
     }
 };
+
+async function renderCharts() {
+    if (!dbReady) return;
+    try {
+        const { data, error } = await mySupabase
+            .from('shift_logs')
+            .select('created_at, total_usage, time_start')
+            .order('created_at', { ascending: true })
+            .limit(30);
+        
+        if (error) throw error;
+        if (!data?.length) return;
+
+        const daily = {};
+        const shiftTotals = { '07:00': 0, '15:00': 0, '23:00': 0 };
+
+        data.forEach(row => {
+            const date = new Date(row.created_at).toISOString().split('T')[0];
+            if (!daily[date]) daily[date] = { total: 0, count: 0 };
+            daily[date].total += row.total_usage;
+            daily[date].count++;
+            
+            const shiftKey = row.time_start.slice(0, 5);
+            if (shiftTotals[shiftKey] !== undefined) shiftTotals[shiftKey] += row.total_usage;
+        });
+
+        const labels = Object.keys(daily).slice(-7);
+        const trendData = labels.map(d => (daily[d].total / daily[d].count).toFixed(2));
+
+        const ctx1 = document.getElementById('trendChart').getContext('2d');
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(ctx1, {
+            type: 'line',
+            data: { labels, datasets: [{
+                label: 'Rata-rata m³/jam',
+                data: trendData,
+                borderColor: '#00f2ff',
+                backgroundColor: 'rgba(0,242,255,0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#00f2ff'
+            }]},
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#fff' } } },
+                scales: { 
+                    x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }},
+                    y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        const ctx2 = document.getElementById('shiftChart').getContext('2d');
+        if (shiftChart) shiftChart.destroy();
+        shiftChart = new Chart(ctx2, {
+            type: 'bar',
+            data: { 
+                labels: ['🌅 Pagi (07-15)', '☀️ Sore (15-23)', '🌙 Malam (23-07)'],
+                datasets: [{
+                    label: 'Total m³',
+                    data: [shiftTotals['07:00'], shiftTotals['15:00'], shiftTotals['23:00']],
+                    backgroundColor: ['#00f2ff', '#d946ef', '#10b981'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { ticks: { color: '#a0aec0' }, grid: { display: false }},
+                    y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+                }
+            }
+        });
+
+        document.getElementById('charts').style.display = 'grid';
+        log('📈 Charts rendered');
+    } catch (e) {
+        log('⚠️ Chart render failed: ' + e.message);
+    }
+}
 
 if (dbReady) {
     log('✅ Supabase ready');
