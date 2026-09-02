@@ -102,8 +102,6 @@ meterForm.addEventListener('submit', async (e) => {
         const meterEnd = parseFloat(document.getElementById('meterEnd').value);
         const timeStart = document.getElementById('timeStart').value;
         const timeEnd = document.getElementById('timeEnd').value;
-        const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
-        const shiftNote = document.getElementById('shiftNote').value;
 
         console.log('📊 Data:', { meterStart, meterEnd, timeStart, timeEnd });
 
@@ -115,9 +113,8 @@ meterForm.addEventListener('submit', async (e) => {
         localStorage.setItem('lastMeterReadingGas', meterEnd);
 
         const totalUsage = meterEnd - meterStart;
-        const totalCost = totalUsage * unitPrice;
 
-        console.log('💰 Kalkulasi:', { totalUsage, totalCost });
+        console.log('💰 Kalkulasi:', { totalUsage });
 
         // Save to Supabase (with check)
         if (supabaseClient) {
@@ -131,8 +128,8 @@ meterForm.addEventListener('submit', async (e) => {
                         meter_start: meterStart,
                         meter_end: meterEnd,
                         total_usage: totalUsage,
-                        cost: totalCost,
-                        note: shiftNote
+                        cost: 0,
+                        note: ''
                     }])
                     .select();
 
@@ -179,14 +176,6 @@ meterForm.addEventListener('submit', async (e) => {
         document.getElementById('resTotal').innerText = totalUsage.toFixed(2);
         document.getElementById('resDuration').innerText = durationHours.toFixed(2);
         document.getElementById('resAvg').innerText = avgUsagePerHour.toFixed(2);
-
-        const costCard = document.getElementById('costCard');
-        if (unitPrice > 0) {
-            document.getElementById('resCost').innerText = `Rp ${totalCost.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            costCard.style.display = 'block';
-        } else {
-            costCard.style.display = 'none';
-        }
 
         // Smart Status Tag
         const statusBadge = document.getElementById('shiftStatusBadge');
@@ -325,8 +314,6 @@ async function renderShiftHistory() {
             <td>${log.time_start} - ${log.time_end}</td>
             <td>${log.meter_start.toFixed(2)} → ${log.meter_end.toFixed(2)} m³</td>
             <td style="color: #ff9900; font-weight: bold;">${log.total_usage.toFixed(2)} m³</td>
-            <td style="color: #10b981; font-weight: bold;">${log.cost > 0 ? 'Rp ' + log.cost.toLocaleString('id-ID', { minimumFractionDigits: 2 }) : '-'}</td>
-            <td>${log.note || '-'}</td>
         </tr>
     `).join('');
 }

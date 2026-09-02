@@ -56,14 +56,6 @@
                         <label>Waktu Akhir</label>
                         <input type="time" id="timeEnd" required>
                     </div>
-                    <div class="form-group">
-                        <label>Tarif / Harga per m³ (Opsional)</label>
-                        <input type="number" id="unitPrice" step="any" inputmode="decimal" placeholder="Contoh: 12500 (Rp / m³)">
-                    </div>
-                    <div class="form-group">
-                        <label>Catatan / Nama Operator (Opsional)</label>
-                        <input type="text" id="shiftNote" placeholder="Contoh: Operator Andi - Regulator Normal">
-                    </div>
                 </div>
                 <div class="actions">
                     <button type="submit" class="btn-primary">Hitung & Simpan</button>
@@ -85,10 +77,6 @@
                 <div class="stat-card">
                     <span class="stat-label">Rata-rata</span>
                     <span class="stat-value"><span id="resAvg">0</span> m³/jam</span>
-                </div>
-                <div class="stat-card" id="costCard" style="display:none;">
-                    <span class="stat-label">Estimasi Biaya Gas</span>
-                    <span class="stat-value" id="resCost" style="color: #10b981;">Rp 0</span>
                 </div>
                 <div class="stat-card" style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: rgba(255,100,0,0.05);">
                     <span style="font-weight: 500;">Status Aliran Gas:</span>
@@ -141,8 +129,6 @@
                             <th>Rentang Waktu</th>
                             <th>Meter Gas (Awal → Akhir)</th>
                             <th>Total (m³)</th>
-                            <th>Biaya</th>
-                            <th>Catatan</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
