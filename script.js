@@ -150,7 +150,7 @@ async function renderCharts() {
             }]},
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 animation: false,
                 plugins: { legend: { display: false } },
                 scales: { 
