@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simple - Fuel Calc</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { padding: 10px; width: 100%; max-width: 300px; font-size: 16px; }
+        button { padding: 15px 30px; font-size: 18px; background: #ff6600; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+        #results { margin-top: 30px; padding: 20px; background: white; border-radius: 8px; display: none; }
+        #log { margin-top: 20px; padding: 15px; background: #000; color: #0f0; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Test Simple - Gas Calculator</h1>
+    <p>Versi MINIMAL tanpa database, hanya kalkulasi pure JavaScript</p>
+    
+    <form id="testForm">
+        <div class="form-group">
+            <label>Meter Awal (m³)</label>
+            <input type="number" id="meterStart" required placeholder="1000" value="1000">
+        </div>
+        
+        <div class="form-group">
+            <label>Waktu Awal</label>
+            <input type="time" id="timeStart" required value="07:00">
+        </div>
+        
+        <div class="form-group">
+            <label>Meter Akhir (m³)</label>
+            <input type="number" id="meterEnd" required placeholder="1200" value="1200">
+        </div>
+        
+        <div class="form-group">
+            <label>Waktu Akhir</label>
+            <input type="time" id="timeEnd" required value="15:00">
+        </div>
+        
+        <button type="submit">🔥 HITUNG</button>
+    </form>
+    
+    <div id="results">
+        <h2>📊 HASIL:</h2>
+        <p><strong>Total Pemakaian:</strong> <span id="resTotal">0</span> m³</p>
+        <p><strong>Durasi:</strong> <span id="resDuration">0</span> Jam</p>
+        <p><strong>Rata-rata:</strong> <span id="resAvg">0</span> m³/jam</p>
+    </div>
+    
+    <div id="log">
+        <strong>📋 LOG:</strong><br>
+    </div>
+    
+    <script>
+        const logDiv = document.getElementById('log');
+        
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<br>[${time}] ${msg}`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+        
+        log('🚀 Page loaded');
+        log('📱 Device: ' + navigator.userAgent.substring(0, 80));
+        
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            log('🔵 Form submitted');
+            
+            try {
+                // Get values
+                const meterStart = parseFloat(document.getElementById('meterStart').value);
+                const meterEnd = parseFloat(document.getElementById('meterEnd').value);
+                const timeStart = document.getElementById('timeStart').value;
+                const timeEnd = document.getElementById('timeEnd').value;
+                
+                log(`📊 Input: ${meterStart} → ${meterEnd}, ${timeStart} → ${timeEnd}`);
+                
+                // Validate
+                if (meterEnd <= meterStart) {
+                    log('❌ Validation error: meter akhir <= awal');
+                    alert('Meter akhir harus lebih besar dari meter awal!');
+                    return;
+                }
+                
+                log('✅ Validation OK');
+                
+                // Calculate
+                const totalUsage = meterEnd - meterStart;
+                log(`💰 Total usage: ${totalUsage}`);
+                
+                // Parse time
+                const [sH, sM] = timeStart.split(':').map(Number);
+                const [eH, eM] = timeEnd.split(':').map(Number);
+                
+                let startMin = sH * 60 + sM;
+                let endMin = eH * 60 + eM;
+                
+                if (endMin <= startMin) endMin += 24 * 60;
+                
+                const durationMin = endMin - startMin;
+                const durationHours = durationMin / 60;
+                const avgPerHour = totalUsage / durationHours;
+                
+                log(`⏱️ Duration: ${durationHours.toFixed(2)} hours`);
+                log(`📈 Average: ${avgPerHour.toFixed(2)} m³/h`);
+                
+                // Display results
+                document.getElementById('resTotal').innerText = totalUsage.toFixed(2);
+                document.getElementById('resDuration').innerText = durationHours.toFixed(2);
+                document.getElementById('resAvg').innerText = avgPerHour.toFixed(2);
+                
+                document.getElementById('results').style.display = 'block';
+                
+                log('✅ DONE! Results displayed');
+                
+            } catch (error) {
+                log('❌ FATAL ERROR: ' + error.message);
+                log('❌ Stack: ' + error.stack);
+                alert('ERROR: ' + error.message);
+            }
+        });
+        
+        log('✅ Event listener attached');
+    </script>
+</body>
+</html>
