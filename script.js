@@ -166,36 +166,6 @@ async function renderCharts() {
             });
             log('📈 Trend chart created');
 
-            const ctx2 = canvas2.getContext('2d');
-            if (shiftChart) shiftChart.destroy();
-            shiftChart = new Chart(ctx2, {
-                type: 'line',
-                data: { 
-                    labels: ['🌅 Pagi', '☀️ Sore', '🌙 Malam'],
-                    datasets: [{
-                        label: 'Total m³',
-                        data: [shiftTotals['pagi'], shiftTotals['sore'], shiftTotals['malam']],
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16,185,129,0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 2,
-                        pointBackgroundColor: '#10b981'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    plugins: { legend: { display: false } },
-                    scales: { 
-                        x: { display: false, grid: { display: false }},
-                        y: { display: false, grid: { display: false }, beginAtZero: true }
-                    }
-                }
-            });
-        log('📈 Shift chart created');
-
         document.getElementById('charts').style.display = 'grid';
         log('📈 Charts container display=grid');
     } catch (e) {
