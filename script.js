@@ -7,7 +7,11 @@ const resultTable = document.getElementById('resultTable').querySelector('tbody'
 const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
 // Supabase Initialization
-const supabase = supabase.createClient('https://dpnerteilzewxvndziit.supabase.co', 'sb_publishable_ep14e6P_0pZNgIGmJ5ExYQ_ssPAduNW');
+const { createClient } = supabase;
+const supabaseClient = createClient(
+    'https://dpnerteilzewxvndziit.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I'
+);
 
 let tableData = [];
 let usageChart = null;
@@ -95,7 +99,7 @@ meterForm.addEventListener('submit', async (e) => {
     const totalCost = totalUsage * unitPrice;
 
     // Save to Supabase
-    const { error } = await supabase
+    const { error } = await supabaseClient
         .from('shift_logs')
         .insert([{
             time_start: timeStart,
@@ -241,7 +245,7 @@ async function renderShiftHistory() {
 
     loader.style.display = 'block';
     
-    const { data: historyLog, error } = await supabase
+    const { data: historyLog, error } = await supabaseClient
         .from('shift_logs')
         .select('*')
         .order('created_at', { ascending: false });
@@ -268,7 +272,7 @@ async function renderShiftHistory() {
 
 document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
     if (confirm("Yakin ingin menghapus seluruh log riwayat shift gas dari database?")) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('shift_logs')
             .delete()
             .neq('id', 0); // Hack to delete all, assuming id > 0
@@ -285,7 +289,7 @@ document.getElementById('clearHistoryBtn').addEventListener('click', async () =>
 });
 
 exportHistoryBtn.addEventListener('click', async () => {
-    const { data: historyLog, error } = await supabase
+    const { data: historyLog, error } = await supabaseClient
         .from('shift_logs')
         .select('*');
 
