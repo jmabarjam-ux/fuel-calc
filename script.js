@@ -85,7 +85,13 @@ async function renderCharts() {
         
         if (error) throw error;
         log('📈 Chart query data: ' + JSON.stringify(data));
-        if (!data?.length) return;
+        if (!data?.length) {
+            log('⚠️ No data for charts');
+            return;
+        }
+
+        // Debug: show first row structure
+        log('📈 First row: created_at=' + data[0].created_at + ', time_start=' + data[0].time_start + ', total_usage=' + data[0].total_usage);
 
         const daily = {};
         const shiftTotals = { '07:00': 0, '15:00': 0, '23:00': 0 };
@@ -99,6 +105,9 @@ async function renderCharts() {
             const shiftKey = row.time_start.slice(0, 5);
             if (shiftTotals[shiftKey] !== undefined) shiftTotals[shiftKey] += row.total_usage;
         });
+
+        log('📈 Daily aggregated: ' + JSON.stringify(daily));
+        log('📈 Shift totals: ' + JSON.stringify(shiftTotals));
 
         const labels = Object.keys(daily).slice(-7);
         const trendData = labels.map(d => (daily[d].total / daily[d].count).toFixed(2));
