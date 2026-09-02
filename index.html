@@ -162,6 +162,9 @@
             }
         }
         
+        // Make mlog globally accessible
+        window.mlog = mlog;
+        
         // Intercept console
         const origLog = console.log;
         const origError = console.error;

@@ -6,6 +6,15 @@ const resultsArea = document.getElementById('resultsArea');
 const resultTable = document.getElementById('resultTable').querySelector('tbody');
 const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
+// Mobile debug helper (safe to call even if element doesn't exist yet)
+function mlog(msg) {
+    console.log(msg);
+    // Try to log to mobile debug console if exists
+    if (typeof window.mlog === 'function' && window.mlog !== mlog) {
+        window.mlog(msg);
+    }
+}
+
 // Supabase Initialization (with error handling)
 const supabaseUrl = 'https://dpnerteilzewxvndziit.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I';
@@ -68,6 +77,10 @@ if (typeof particlesJS !== 'undefined') {
 
 // Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
+    mlog('🚀 App initialized');
+    mlog(`📱 User Agent: ${navigator.userAgent.substring(0, 50)}...`);
+    mlog(`🖥️ Screen: ${window.innerWidth}x${window.innerHeight}`);
+    
     // Render history saja, TIDAK auto-fill meter awal
     renderShiftHistory();
 });
@@ -76,23 +89,37 @@ meterForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     console.log('🔵 Form submitted');
+    mlog('🔵 Form submitted - START');
     
     try {
-        const meterStart = parseFloat(document.getElementById('meterStart').value);
-        const meterEnd = parseFloat(document.getElementById('meterEnd').value);
-        const timeStart = document.getElementById('timeStart').value;
-        const timeEnd = document.getElementById('timeEnd').value;
+        // Ambil elemen input
+        const meterStartEl = document.getElementById('meterStart');
+        const meterEndEl = document.getElementById('meterEnd');
+        const timeStartEl = document.getElementById('timeStart');
+        const timeEndEl = document.getElementById('timeEnd');
+        
+        mlog(`📋 Elements found: ${meterStartEl ? 'Y' : 'N'}, ${meterEndEl ? 'Y' : 'N'}, ${timeStartEl ? 'Y' : 'N'}, ${timeEndEl ? 'Y' : 'N'}`);
+        
+        const meterStart = parseFloat(meterStartEl.value);
+        const meterEnd = parseFloat(meterEndEl.value);
+        const timeStart = timeStartEl.value;
+        const timeEnd = timeEndEl.value;
 
         console.log('📊 Data:', { meterStart, meterEnd, timeStart, timeEnd });
+        mlog(`📊 Data: Meter ${meterStart}->${meterEnd}, Time ${timeStart}->${timeEnd}`);
 
         if (meterEnd < meterStart) {
+            mlog('❌ Validation fail: meter akhir < awal');
             alert("Angka meter gas akhir tidak boleh lebih kecil dari meter awal.");
             return;
         }
+        
+        mlog('✅ Validation passed');
 
         const totalUsage = meterEnd - meterStart;
 
         console.log('💰 Kalkulasi:', { totalUsage });
+        mlog(`💰 Total usage: ${totalUsage}`);
 
         // Save to Supabase (with check)
         if (supabaseClient) {
@@ -149,8 +176,10 @@ meterForm.addEventListener('submit', async (e) => {
         const avgUsagePerHour = totalUsage / durationHours;
 
         console.log('📈 Results:', { durationHours, avgUsagePerHour });
+        mlog(`📈 Duration: ${durationHours.toFixed(2)}h, Avg: ${avgUsagePerHour.toFixed(2)} m³/h`);
 
         // Update summary
+        mlog('📺 Updating UI summary...');
         document.getElementById('resTotal').innerText = totalUsage.toFixed(2);
         document.getElementById('resDuration').innerText = durationHours.toFixed(2);
         document.getElementById('resAvg').innerText = avgUsagePerHour.toFixed(2);
