@@ -237,11 +237,16 @@ function updateChart() {
 async function renderShiftHistory() {
     const historyCard = document.getElementById('historyLogCard');
     const tbody = document.getElementById('historyLogTable').querySelector('tbody');
+    const loader = document.getElementById('loader');
+
+    loader.style.display = 'block';
     
     const { data: historyLog, error } = await supabase
         .from('shift_logs')
         .select('*')
         .order('created_at', { ascending: false });
+
+    loader.style.display = 'none';
 
     if (error || !historyLog || historyLog.length === 0) {
         historyCard.style.display = 'none';
