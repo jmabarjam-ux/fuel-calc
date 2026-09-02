@@ -23,6 +23,18 @@ window.setShift = function(start, end) {
     log(`⏰ Shift: ${start}-${end}`);
 };
 
+window.toggleLog = function() {
+    const panel = document.getElementById('logPanel');
+    const btn = panel.querySelector('button');
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        btn.textContent = 'Tutup';
+    } else {
+        panel.style.display = 'none';
+        btn.textContent = 'Buka Log';
+    }
+};
+
 window.resetForm = function() {
     document.getElementById('calcForm').reset();
     document.getElementById('results').classList.remove('show');

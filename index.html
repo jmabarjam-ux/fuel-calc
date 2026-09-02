@@ -134,6 +134,28 @@
             border-radius: 12px;
             padding: 15px;
         }
+        
+        .log-panel {
+            background: rgba(20,20,30,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .log-title { color: #00f2ff; font-size: 14px; font-weight: 600; }
+        .log-content {
+            font-family: monospace;
+            font-size: 11px;
+            color: #0f0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .log-entry:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -225,9 +247,12 @@
         </div>
     </div>
     
-    <div class="log" id="log">
-        <button class="log-close" onclick="document.getElementById('log').style.display='none'">X</button>
-        <div id="logContent"></div>
+    <div class="log-panel" id="logPanel">
+        <div class="log-header">
+            <span class="log-title">📋 Log Aktivitas</span>
+            <button class="btn-secondary" onclick="toggleLog()" style="padding: 4px 12px; font-size: 12px;">Tutup</button>
+        </div>
+        <div class="log-content" id="logContent"></div>
     </div>
     
     <script src="script.js" defer></script>
