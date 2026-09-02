@@ -6,30 +6,43 @@ const resultsArea = document.getElementById('resultsArea');
 const resultTable = document.getElementById('resultTable').querySelector('tbody');
 const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
-// Mobile debug helper (safe to call even if element doesn't exist yet)
+// Mobile debug helper - simple version to avoid circular reference
 function mlog(msg) {
     console.log(msg);
-    // Try to log to mobile debug console if exists
-    if (typeof window.mlog === 'function' && window.mlog !== mlog) {
-        window.mlog(msg);
-    }
+    // Defer to avoid blocking
+    setTimeout(() => {
+        try {
+            if (window.mlog && typeof window.mlog === 'function') {
+                window.mlog(msg);
+            }
+        } catch (e) {
+            // Silent fail - don't block execution
+        }
+    }, 0);
 }
 
 // Supabase Initialization (with error handling)
 const supabaseUrl = 'https://dpnerteilzewxvndziit.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I';
 
-let supabaseClient;
-try {
-    if (window.supabase) {
-        supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-        console.log('✅ Supabase client initialized');
-    } else {
-        console.error('❌ Supabase library not loaded!');
+let supabaseClient = null;
+
+// Initialize Supabase AFTER a delay to avoid blocking
+setTimeout(() => {
+    try {
+        if (window.supabase) {
+            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+            console.log('✅ Supabase client initialized');
+            mlog('✅ Supabase ready');
+        } else {
+            console.error('❌ Supabase library not loaded!');
+            mlog('❌ Supabase lib not loaded');
+        }
+    } catch (error) {
+        console.error('❌ Error initializing Supabase:', error);
+        mlog('❌ Supabase init error: ' + error.message);
     }
-} catch (error) {
-    console.error('❌ Error initializing Supabase:', error);
-}
+}, 100);
 
 let tableData = [];
 let usageChart = null;
@@ -81,8 +94,12 @@ window.addEventListener('DOMContentLoaded', () => {
     mlog(`📱 User Agent: ${navigator.userAgent.substring(0, 50)}...`);
     mlog(`🖥️ Screen: ${window.innerWidth}x${window.innerHeight}`);
     
-    // Render history saja, TIDAK auto-fill meter awal
-    renderShiftHistory();
+    // Render history with delay to allow Supabase init
+    setTimeout(() => {
+        renderShiftHistory().catch(err => {
+            console.error('History load failed:', err);
+        });
+    }, 500);
 });
 
 meterForm.addEventListener('submit', async (e) => {
@@ -291,45 +308,53 @@ function updateChart() {
 }
 
 async function renderShiftHistory() {
-    const historyCard = document.getElementById('historyLogCard');
-    const tbody = document.getElementById('historyLogTable').querySelector('tbody');
-    const loader = document.getElementById('loader');
+    try {
+        const historyCard = document.getElementById('historyLogCard');
+        const tbody = document.getElementById('historyLogTable').querySelector('tbody');
+        const loader = document.getElementById('loader');
 
-    if (!supabaseClient) {
-        console.warn('⚠️ Supabase not initialized, skipping history load');
-        historyCard.style.display = 'none';
-        return;
+        // Skip if Supabase not ready yet
+        if (!supabaseClient) {
+            console.warn('⚠️ Supabase not initialized, skipping history load');
+            if (historyCard) historyCard.style.display = 'none';
+            return;
+        }
+
+        if (loader) loader.style.display = 'block';
+        
+        const { data: historyLog, error } = await supabaseClient
+            .from('shift_logs')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (loader) loader.style.display = 'none';
+
+        if (error) {
+            console.error('Error loading history:', error);
+            if (historyCard) historyCard.style.display = 'none';
+            return;
+        }
+
+        if (!historyLog || historyLog.length === 0) {
+            if (historyCard) historyCard.style.display = 'none';
+            return;
+        }
+        
+        if (historyCard) historyCard.style.display = 'block';
+        if (tbody) {
+            tbody.innerHTML = historyLog.map(log => `
+                <tr>
+                    <td>${new Date(log.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                    <td>${log.time_start} - ${log.time_end}</td>
+                    <td>${log.meter_start.toFixed(2)} → ${log.meter_end.toFixed(2)} m³</td>
+                    <td style="color: #ff9900; font-weight: bold;">${log.total_usage.toFixed(2)} m³</td>
+                </tr>
+            `).join('');
+        }
+    } catch (err) {
+        console.error('❌ renderShiftHistory error:', err);
+        // Silent fail - don't block app
     }
-
-    loader.style.display = 'block';
-    
-    const { data: historyLog, error } = await supabaseClient
-        .from('shift_logs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    loader.style.display = 'none';
-
-    if (error) {
-        console.error('Error loading history:', error);
-        historyCard.style.display = 'none';
-        return;
-    }
-
-    if (!historyLog || historyLog.length === 0) {
-        historyCard.style.display = 'none';
-        return;
-    }
-    
-    historyCard.style.display = 'block';
-    tbody.innerHTML = historyLog.map(log => `
-        <tr>
-            <td>${new Date(log.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</td>
-            <td>${log.time_start} - ${log.time_end}</td>
-            <td>${log.meter_start.toFixed(2)} → ${log.meter_end.toFixed(2)} m³</td>
-            <td style="color: #ff9900; font-weight: bold;">${log.total_usage.toFixed(2)} m³</td>
-        </tr>
-    `).join('');
 }
 
 document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
