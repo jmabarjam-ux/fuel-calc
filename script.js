@@ -8,7 +8,6 @@ const dbReady = !!mySupabase;
 const logContent = document.getElementById('logContent');
 
 let trendChart = null;
-let shiftChart = null;
 
 function log(msg) {
     const time = new Date().toLocaleTimeString();
@@ -20,7 +19,7 @@ function log(msg) {
 window.setShift = function(start, end) {
     document.getElementById('timeStart').value = start;
     document.getElementById('timeEnd').value = end;
-    log(`⏰ Shift: ${start}-${end}`);
+    log(`[SHIFT] ${start}-${end}`);
 };
 
 window.toggleLog = function() {
@@ -38,7 +37,7 @@ window.toggleLog = function() {
 window.resetForm = function() {
     document.getElementById('calcForm').reset();
     document.getElementById('results').classList.remove('show');
-    log('🔄 Reset');
+    log('[RESET]');
 };
 
 async function loadHistory() {
@@ -58,15 +57,15 @@ async function loadHistory() {
                 <tr>
                     <td>${new Date(row.created_at).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'})}</td>
                     <td>${row.time_start}-${row.time_end}</td>
-                    <td>${row.total_usage.toFixed(2)} m³</td>
+                    <td>${row.total_usage.toFixed(2)} m3</td>
                 </tr>
             `).join('');
             document.getElementById('history').style.display = 'block';
-            log(`📊 Loaded ${data.length} history records`);
+            log(`[HISTORY] Loaded ${data.length} records`);
         }
         await renderCharts();
     } catch (e) {
-        log('⚠️ History load failed: ' + e.message);
+        log('[ERROR] History load failed: ' + e.message);
     }
 }
 
@@ -80,7 +79,7 @@ window.clearHistory = async function() {
             .neq('id', -1);
         if (error) throw error;
         document.getElementById('history').style.display = 'none';
-        log('🗑️ History cleared');
+        log('[HISTORY] Cleared');
     } catch (e) {
         alert('Error: ' + e.message);
     }
@@ -96,37 +95,22 @@ async function renderCharts() {
             .limit(30);
         
         if (error) throw error;
-        log('📈 Chart query data: ' + JSON.stringify(data));
+        log('[CHART] Query data: ' + JSON.stringify(data));
         if (!data?.length) {
-            log('⚠️ No data for charts');
+            log('[WARN] No data for charts');
             return;
         }
 
-        // Debug: show first row structure
-        log('📈 First row: created_at=' + data[0].created_at + ', time_start=' + data[0].time_start + ', total_usage=' + data[0].total_usage);
-
         const daily = {};
-        const shiftTotals = { 'pagi': 0, 'sore': 0, 'malam': 0 };
-
-        const getShift = (timeStr) => {
-            const hour = parseInt(timeStr.slice(0, 2));
-            if (hour >= 7 && hour < 15) return 'pagi';
-            if (hour >= 15 && hour < 23) return 'sore';
-            return 'malam';
-        };
 
         data.forEach(row => {
             const date = new Date(row.created_at).toISOString().split('T')[0];
             if (!daily[date]) daily[date] = { total: 0, count: 0 };
             daily[date].total += row.total_usage;
             daily[date].count++;
-            
-            const shift = getShift(row.time_start);
-            shiftTotals[shift] += row.total_usage;
         });
 
-        log('📈 Daily aggregated: ' + JSON.stringify(daily));
-        log('📈 Shift totals: ' + JSON.stringify(shiftTotals));
+        log('[CHART] Daily aggregated: ' + JSON.stringify(daily));
 
         const labels = Object.keys(daily).slice(-7);
         const trendData = labels.map(d => (daily[d].total / daily[d].count).toFixed(2));
@@ -143,7 +127,7 @@ async function renderCharts() {
             trendChart = new Chart(ctx1, {
                 type: 'line',
                 data: { labels, datasets: [{
-                    label: 'm³/jam',
+                    label: 'm3/jam',
                     data: trendData,
                     borderColor: '#00f2ff',
                     backgroundColor: 'rgba(0,242,255,0.1)',
@@ -164,27 +148,27 @@ async function renderCharts() {
                 }
             });
         }
-        log('📈 Trend chart created');
+        log('[CHART] Trend chart created');
 
         document.getElementById('charts').style.display = 'block';
 
     } catch (e) {
-        log('⚠️ Chart render failed: ' + e.message);
+        log('[ERROR] Chart render failed: ' + e.message);
     }
 }
 
 if (dbReady) {
-    log('✅ Supabase ready');
-    document.getElementById('dbStatus').innerHTML = '<div class="status success">✅ Database connected</div>';
+    log('[SYSTEM] Supabase ready');
+    document.getElementById('dbStatus').innerHTML = '<div class="status success">Database connected</div>';
     loadHistory();
 } else {
-    log('❌ Supabase not loaded');
-    document.getElementById('dbStatus').innerHTML = '<div class="status warning">⚠️ Offline mode - data tidak tersimpan</div>';
+    log('[ERROR] Supabase not loaded');
+    document.getElementById('dbStatus').innerHTML = '<div class="status warning">Offline mode - data tidak tersimpan</div>';
 }
 
 document.getElementById('calcForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    log('🔵 Submit');
+    log('[SUBMIT]');
     
     try {
         const meterStart = parseFloat(document.getElementById('meterStart').value);
@@ -206,25 +190,25 @@ document.getElementById('calcForm').addEventListener('submit', async function(e)
         const durationHours = (endMin - startMin) / 60;
         const avgPerHour = totalUsage / durationHours;
         
-        log(`💰 ${totalUsage} m³, ${durationHours.toFixed(2)}h, ${avgPerHour.toFixed(2)} m³/h`);
+        log(`[CALC] ${totalUsage} m3, ${durationHours.toFixed(2)}h, ${avgPerHour.toFixed(2)} m3/h`);
         
         if (dbReady) {
-            mySupabase.from('shift_logs').insert([{
-                time_start: timeStart,
-                time_end: timeEnd,
-                meter_start: meterStart,
-                meter_end: meterEnd,
-                total_usage: totalUsage,
-                cost: 0,
-                note: ''
-            }]).then(({error}) => {
-                if (error) {
-                    log('❌ DB save failed: ' + error.message);
-                } else {
-                    log('✅ Saved to DB');
-                    loadHistory();
-                }
-            });
+            try {
+                const { error } = await mySupabase.from('shift_logs').insert([{
+                    time_start: timeStart,
+                    time_end: timeEnd,
+                    meter_start: meterStart,
+                    meter_end: meterEnd,
+                    total_usage: totalUsage,
+                    cost: 0,
+                    note: ''
+                }]);
+                if (error) throw error;
+                log('[DB] Saved');
+                loadHistory();
+            } catch (err) {
+                log('[ERROR] DB save failed: ' + err.message);
+            }
         }
         
         document.getElementById('resTotal').textContent = totalUsage.toFixed(2);
@@ -251,11 +235,11 @@ document.getElementById('calcForm').addEventListener('submit', async function(e)
         }
         
         document.getElementById('results').classList.add('show');
-        log('✅ DONE');
+        log('[DONE]');
         
         this.reset();
     } catch (error) {
-        log('❌ ERROR: ' + error.message);
+        log('[ERROR] ' + error.message);
         alert('ERROR: ' + error.message);
     }
 });
