@@ -95,130 +95,161 @@ document.getElementById('meterForm').addEventListener('input', (e) => {
 meterForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const meterStart = parseFloat(document.getElementById('meterStart').value);
-    const meterEnd = parseFloat(document.getElementById('meterEnd').value);
-    const timeStart = document.getElementById('timeStart').value;
-    const timeEnd = document.getElementById('timeEnd').value;
-    const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
-    const shiftNote = document.getElementById('shiftNote').value;
+    console.log('🔵 Form submitted');
+    
+    try {
+        const meterStart = parseFloat(document.getElementById('meterStart').value);
+        const meterEnd = parseFloat(document.getElementById('meterEnd').value);
+        const timeStart = document.getElementById('timeStart').value;
+        const timeEnd = document.getElementById('timeEnd').value;
+        const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+        const shiftNote = document.getElementById('shiftNote').value;
 
-    if (meterEnd < meterStart) {
-        alert("Angka meter gas akhir tidak boleh lebih kecil dari meter awal.");
-        return;
-    }
+        console.log('📊 Data:', { meterStart, meterEnd, timeStart, timeEnd });
 
-    localStorage.setItem('lastMeterReadingGas', meterEnd);
-
-    const totalUsage = meterEnd - meterStart;
-    const totalCost = totalUsage * unitPrice;
-
-    // Save to Supabase (with check)
-    if (supabaseClient) {
-        const { error } = await supabaseClient
-            .from('shift_logs')
-            .insert([{
-                time_start: timeStart,
-                time_end: timeEnd,
-                meter_start: meterStart,
-                meter_end: meterEnd,
-                total_usage: totalUsage,
-                cost: totalCost,
-                note: shiftNote
-            }]);
-
-        if (error) {
-            console.error('Error saving data:', error);
-            alert("Gagal menyimpan data ke database: " + error.message);
-            // Lanjutkan kalkulasi meski gagal save
-        } else {
-            renderShiftHistory();
+        if (meterEnd < meterStart) {
+            alert("Angka meter gas akhir tidak boleh lebih kecil dari meter awal.");
+            return;
         }
-    } else {
-        console.warn('⚠️ Supabase not initialized, skipping database save');
-    }
 
-    // Parse times (LAKUKAN SEBELUM RESET)
+        localStorage.setItem('lastMeterReadingGas', meterEnd);
 
-    const [sH, sM] = timeStart.split(':').map(Number);
-    const [eH, eM] = timeEnd.split(':').map(Number);
+        const totalUsage = meterEnd - meterStart;
+        const totalCost = totalUsage * unitPrice;
 
-    let startTotalMinutes = sH * 60 + sM;
-    let endTotalMinutes = eH * 60 + eM;
+        console.log('💰 Kalkulasi:', { totalUsage, totalCost });
 
-    if (endTotalMinutes <= startTotalMinutes) endTotalMinutes += 24 * 60;
-    
-    const durationMinutes = endTotalMinutes - startTotalMinutes;
-    const durationHours = durationMinutes / 60;
+        // Save to Supabase (with check)
+        if (supabaseClient) {
+            console.log('💾 Saving to Supabase...');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('shift_logs')
+                    .insert([{
+                        time_start: timeStart,
+                        time_end: timeEnd,
+                        meter_start: meterStart,
+                        meter_end: meterEnd,
+                        total_usage: totalUsage,
+                        cost: totalCost,
+                        note: shiftNote
+                    }])
+                    .select();
 
-    if (durationMinutes === 0) {
-        alert("Waktu awal dan akhir tidak boleh sama jika angka meter berbeda.");
-        return;
-    }
+                if (error) {
+                    console.error('❌ Error saving data:', error);
+                    alert("Gagal menyimpan ke database: " + error.message);
+                } else {
+                    console.log('✅ Saved to database:', data);
+                    renderShiftHistory();
+                }
+            } catch (dbError) {
+                console.error('❌ Database exception:', dbError);
+                alert("Error database: " + dbError.message);
+            }
+        } else {
+            console.warn('⚠️ Supabase not initialized');
+            alert('⚠️ Aplikasi berjalan offline - data tidak tersimpan ke database');
+        }
 
-    const avgUsagePerHour = totalUsage / durationHours;
+        // Parse times (LAKUKAN SEBELUM RESET)
+        console.log('🧮 Mulai kalkulasi...');
 
-    // Update summary
-    document.getElementById('resTotal').innerText = totalUsage.toFixed(2);
-    document.getElementById('resDuration').innerText = durationHours.toFixed(2);
-    document.getElementById('resAvg').innerText = avgUsagePerHour.toFixed(2);
+        const [sH, sM] = timeStart.split(':').map(Number);
+        const [eH, eM] = timeEnd.split(':').map(Number);
 
-    const costCard = document.getElementById('costCard');
-    if (unitPrice > 0) {
-        document.getElementById('resCost').innerText = `Rp ${totalCost.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        costCard.style.display = 'block';
-    } else {
-        costCard.style.display = 'none';
-    }
+        let startTotalMinutes = sH * 60 + sM;
+        let endTotalMinutes = eH * 60 + eM;
 
-    // Smart Status Tag
-    const statusBadge = document.getElementById('shiftStatusBadge');
-    if (avgUsagePerHour > 25) {
-        statusBadge.innerText = "⚠️ Aliran Gas Tinggi";
-        statusBadge.style.background = "rgba(255, 193, 7, 0.2)";
-        statusBadge.style.color = "#ffc107";
-    } else {
-        statusBadge.innerText = "🔥 Aliran Gas Normal / Optimal";
-        statusBadge.style.background = "rgba(0, 255, 128, 0.2)";
-        statusBadge.style.color = "#00ff80";
-    }
-
-    // Generate Table
-    tableData = [];
-    resultTable.innerHTML = '';
-    
-    let cumulativeUsage = 0;
-    let numFullHours = Math.floor(durationHours);
-    
-    tableData.push({ time: timeStart, meter: meterStart, usage: 0, cumulative: 0 });
-    resultTable.innerHTML += `<tr><td>${timeStart}</td><td>${meterStart.toFixed(2)}</td><td>0.00</td><td>0.00</td></tr>`;
-    
-    for (let i = 1; i <= numFullHours; i++) {
-        let totalHoursFromStart = sH + i;
-        let hour = totalHoursFromStart % 24;
-        let timeStr = `${hour.toString().padStart(2, '0')}:${sM.toString().padStart(2, '0')}`;
+        if (endTotalMinutes <= startTotalMinutes) endTotalMinutes += 24 * 60;
         
-        let usageThisHour = avgUsagePerHour; 
-        cumulativeUsage += usageThisHour;
-        let meterReading = meterStart + cumulativeUsage;
+        const durationMinutes = endTotalMinutes - startTotalMinutes;
+        const durationHours = durationMinutes / 60;
+
+        if (durationMinutes === 0) {
+            alert("Waktu awal dan akhir tidak boleh sama jika angka meter berbeda.");
+            return;
+        }
+
+        const avgUsagePerHour = totalUsage / durationHours;
+
+        console.log('📈 Results:', { durationHours, avgUsagePerHour });
+
+        // Update summary
+        document.getElementById('resTotal').innerText = totalUsage.toFixed(2);
+        document.getElementById('resDuration').innerText = durationHours.toFixed(2);
+        document.getElementById('resAvg').innerText = avgUsagePerHour.toFixed(2);
+
+        const costCard = document.getElementById('costCard');
+        if (unitPrice > 0) {
+            document.getElementById('resCost').innerText = `Rp ${totalCost.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            costCard.style.display = 'block';
+        } else {
+            costCard.style.display = 'none';
+        }
+
+        // Smart Status Tag
+        const statusBadge = document.getElementById('shiftStatusBadge');
+        if (avgUsagePerHour > 25) {
+            statusBadge.innerText = "⚠️ Aliran Gas Tinggi";
+            statusBadge.style.background = "rgba(255, 193, 7, 0.2)";
+            statusBadge.style.color = "#ffc107";
+        } else {
+            statusBadge.innerText = "🔥 Aliran Gas Normal / Optimal";
+            statusBadge.style.background = "rgba(0, 255, 128, 0.2)";
+            statusBadge.style.color = "#00ff80";
+        }
+
+        console.log('📊 Generating table...');
+
+        // Generate Table
+        tableData = [];
+        resultTable.innerHTML = '';
         
-        tableData.push({ time: timeStr, meter: meterReading, usage: usageThisHour, cumulative: cumulativeUsage });
-        resultTable.innerHTML += `<tr><td>${timeStr}</td><td>${meterReading.toFixed(2)}</td><td>${usageThisHour.toFixed(2)}</td><td>${cumulativeUsage.toFixed(2)}</td></tr>`;
-    }
-    
-    if (durationHours > numFullHours) {
-        let usageLastHour = totalUsage - cumulativeUsage;
-        cumulativeUsage += usageLastHour;
-        tableData.push({ time: timeEnd, meter: meterEnd, usage: usageLastHour, cumulative: totalUsage });
-        resultTable.innerHTML += `<tr><td>${timeEnd}</td><td>${meterEnd.toFixed(2)}</td><td>${usageLastHour.toFixed(2)}</td><td>${totalUsage.toFixed(2)}</td></tr>`;
-    }
+        let cumulativeUsage = 0;
+        let numFullHours = Math.floor(durationHours);
+        
+        tableData.push({ time: timeStart, meter: meterStart, usage: 0, cumulative: 0 });
+        resultTable.innerHTML += `<tr><td>${timeStart}</td><td>${meterStart.toFixed(2)}</td><td>0.00</td><td>0.00</td></tr>`;
+        
+        for (let i = 1; i <= numFullHours; i++) {
+            let totalHoursFromStart = sH + i;
+            let hour = totalHoursFromStart % 24;
+            let timeStr = `${hour.toString().padStart(2, '0')}:${sM.toString().padStart(2, '0')}`;
+            
+            let usageThisHour = avgUsagePerHour; 
+            cumulativeUsage += usageThisHour;
+            let meterReading = meterStart + cumulativeUsage;
+            
+            tableData.push({ time: timeStr, meter: meterReading, usage: usageThisHour, cumulative: cumulativeUsage });
+            resultTable.innerHTML += `<tr><td>${timeStr}</td><td>${meterReading.toFixed(2)}</td><td>${usageThisHour.toFixed(2)}</td><td>${cumulativeUsage.toFixed(2)}</td></tr>`;
+        }
+        
+        if (durationHours > numFullHours) {
+            let usageLastHour = totalUsage - cumulativeUsage;
+            cumulativeUsage += usageLastHour;
+            tableData.push({ time: timeEnd, meter: meterEnd, usage: usageLastHour, cumulative: totalUsage });
+            resultTable.innerHTML += `<tr><td>${timeEnd}</td><td>${meterEnd.toFixed(2)}</td><td>${usageLastHour.toFixed(2)}</td><td>${totalUsage.toFixed(2)}</td></tr>`;
+        }
 
-    resultsArea.style.display = 'block';
-    updateChart();
-    showToast("🔥 Kalkulasi Pemakaian Gas berhasil dicatat!");
+        console.log('📺 Displaying results...');
+        resultsArea.style.display = 'block';
+        
+        console.log('📉 Updating chart...');
+        updateChart();
+        
+        showToast("🔥 Kalkulasi Pemakaian Gas berhasil dicatat!");
 
-    // Clear saved form data and reset (DI AKHIR)
-    localStorage.removeItem('formDataGas');
-    meterForm.reset();
+        // Clear saved form data and reset (DI AKHIR)
+        localStorage.removeItem('formDataGas');
+        meterForm.reset();
+        
+        console.log('✅ Done!');
+        
+    } catch (error) {
+        console.error('❌ FATAL ERROR:', error);
+        alert('ERROR: ' + error.message + '\n\nCek console untuk detail.');
+    }
 });
 
 function updateChart() {
