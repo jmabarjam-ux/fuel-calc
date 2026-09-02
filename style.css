@@ -202,6 +202,7 @@ h1 {
     box-shadow: 0 5px 15px var(--primary-glow);
 }
 
+.form-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 18px;
@@ -559,6 +560,7 @@ tbody tr:hover {
     letter-spacing: 1px;
 }
 
+@media (min-width: 640px) {
     .form-grid {
         grid-template-columns: 1fr 1fr;
         gap: 20px;
