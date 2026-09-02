@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gas Meter Calculator - Emergency Version</title>
+    <title>Gas Meter Calculator Pro</title>
+    <!-- Load Supabase FIRST -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -26,9 +28,8 @@
             border-radius: 10px;
             font-size: 13px;
             cursor: pointer;
-            transition: all 0.3s;
         }
-        .btn-shift:active { background: #00f2ff; color: #000; transform: scale(0.95); }
+        .btn-shift:active { background: #00f2ff; color: #000; }
         
         .form-group { margin-bottom: 15px; }
         label { display: block; color: #a0aec0; font-size: 13px; margin-bottom: 5px; font-weight: 600; }
@@ -41,7 +42,7 @@
             color: #fff;
             font-size: 16px;
         }
-        input:focus { outline: none; border-color: #00f2ff; background: rgba(255,255,255,0.08); }
+        input:focus { outline: none; border-color: #00f2ff; }
         
         .buttons { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 20px; }
         .btn-primary {
@@ -54,7 +55,6 @@
             font-weight: 700;
             cursor: pointer;
         }
-        .btn-primary:active { transform: scale(0.98); }
         .btn-secondary {
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
@@ -66,10 +66,7 @@
             cursor: pointer;
         }
         
-        .results {
-            margin-top: 30px;
-            display: none;
-        }
+        .results { margin-top: 30px; display: none; }
         .results.show { display: block; }
         
         .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -80,7 +77,7 @@
             padding: 15px;
             text-align: center;
         }
-        .stat-label { font-size: 11px; color: #a0aec0; margin-bottom: 5px; text-transform: uppercase; }
+        .stat-label { font-size: 11px; color: #a0aec0; margin-bottom: 5px; }
         .stat-value { font-size: 22px; font-weight: 800; color: #00f2ff; }
         
         .table-container {
@@ -88,10 +85,15 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             overflow: hidden;
+            margin-bottom: 20px;
         }
         table { width: 100%; border-collapse: collapse; }
         th { background: rgba(255,255,255,0.05); padding: 12px; text-align: left; font-size: 12px; color: #a0aec0; }
         td { padding: 12px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        
+        .history { margin-top: 20px; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .btn-clear { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; }
         
         .log {
             position: fixed;
@@ -118,23 +120,28 @@
             border-radius: 3px;
             cursor: pointer;
         }
+        .status { padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+        .status.success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+        .status.warning { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #f59e0b; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔥 Monitoring Pemakaian Meter Gas</h1>
-        <p class="subtitle">Emergency Version - Pure JavaScript</p>
+        <h1>🔥 Monitoring Pemakaian Meter Gas Pro</h1>
+        <p class="subtitle">With Database Support</p>
+        
+        <div id="dbStatus"></div>
         
         <div class="shifts">
-            <button class="btn-shift" onclick="setShift('07:00','15:00')">🌅 Pagi (07-15)</button>
-            <button class="btn-shift" onclick="setShift('15:00','23:00')">☀️ Sore (15-23)</button>
-            <button class="btn-shift" onclick="setShift('23:00','07:00')">🌙 Malam (23-07)</button>
+            <button class="btn-shift" onclick="setShift('07:00','15:00')">🌅 Pagi</button>
+            <button class="btn-shift" onclick="setShift('15:00','23:00')">☀️ Sore</button>
+            <button class="btn-shift" onclick="setShift('23:00','07:00')">🌙 Malam</button>
         </div>
         
         <form id="calcForm">
             <div class="form-group">
                 <label>Angka Meter Gas Awal (m³)</label>
-                <input type="number" id="meterStart" step="any" required placeholder="123">
+                <input type="number" id="meterStart" step="any" required>
             </div>
             <div class="form-group">
                 <label>Waktu Awal</label>
@@ -142,7 +149,7 @@
             </div>
             <div class="form-group">
                 <label>Angka Meter Gas Akhir (m³)</label>
-                <input type="number" id="meterEnd" step="any" required placeholder="456">
+                <input type="number" id="meterEnd" step="any" required>
             </div>
             <div class="form-group">
                 <label>Waktu Akhir</label>
@@ -157,7 +164,7 @@
         <div class="results" id="results">
             <div class="stats">
                 <div class="stat-card">
-                    <div class="stat-label">Total Pemakaian</div>
+                    <div class="stat-label">Total</div>
                     <div class="stat-value"><span id="resTotal">0</span> m³</div>
                 </div>
                 <div class="stat-card">
@@ -173,14 +180,24 @@
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr>
-                            <th>Jam</th>
-                            <th>Meter (m³)</th>
-                            <th>Pakai/jam</th>
-                            <th>Kumulatif</th>
-                        </tr>
+                        <tr><th>Jam</th><th>Meter</th><th>Pakai/jam</th><th>Kumulatif</th></tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="history" id="history" style="display:none;">
+            <div class="history-header">
+                <h2 style="color: #00f2ff;">Riwayat Shift</h2>
+                <button class="btn-clear" onclick="clearHistory()">Hapus</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>Waktu</th><th>Rentang</th><th>Total</th></tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
                 </table>
             </div>
         </div>
@@ -199,23 +216,92 @@
             console.log(msg);
         }
         
-        log('🚀 Page loaded - Emergency version');
+        log('🚀 Page loaded');
+        
+        // Initialize Supabase
+        let supabase = null;
+        let dbReady = false;
+        
+        setTimeout(() => {
+            try {
+                if (window.supabase) {
+                    supabase = window.supabase.createClient(
+                        'https://dpnerteilzewxvndziit.supabase.co',
+                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I'
+                    );
+                    dbReady = true;
+                    log('✅ Supabase ready');
+                    document.getElementById('dbStatus').innerHTML = '<div class="status success">✅ Database connected</div>';
+                    loadHistory();
+                } else {
+                    log('❌ Supabase not loaded');
+                    document.getElementById('dbStatus').innerHTML = '<div class="status warning">⚠️ Offline mode - data tidak tersimpan</div>';
+                }
+            } catch (e) {
+                log('❌ Supabase error: ' + e.message);
+                document.getElementById('dbStatus').innerHTML = '<div class="status warning">⚠️ Database error - running offline</div>';
+            }
+        }, 500);
         
         function setShift(start, end) {
             document.getElementById('timeStart').value = start;
             document.getElementById('timeEnd').value = end;
-            log(`⏰ Shift set: ${start} - ${end}`);
+            log(`⏰ Shift: ${start}-${end}`);
         }
         
         function resetForm() {
             document.getElementById('calcForm').reset();
             document.getElementById('results').classList.remove('show');
-            log('🔄 Form reset');
+            log('🔄 Reset');
         }
         
-        document.getElementById('calcForm').addEventListener('submit', function(e) {
+        async function loadHistory() {
+            if (!dbReady) return;
+            try {
+                const { data, error } = await supabase
+                    .from('shift_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    const historyBody = document.getElementById('historyBody');
+                    historyBody.innerHTML = data.map(row => `
+                        <tr>
+                            <td>${new Date(row.created_at).toLocaleString('id-ID', {dateStyle:'short',timeStyle:'short'})}</td>
+                            <td>${row.time_start}-${row.time_end}</td>
+                            <td>${row.total_usage.toFixed(2)} m³</td>
+                        </tr>
+                    `).join('');
+                    document.getElementById('history').style.display = 'block';
+                    log(`📊 Loaded ${data.length} history records`);
+                }
+            } catch (e) {
+                log('⚠️ History load failed: ' + e.message);
+            }
+        }
+        
+        async function clearHistory() {
+            if (!dbReady) return;
+            if (!confirm('Hapus semua riwayat?')) return;
+            try {
+                const { error } = await supabase
+                    .from('shift_logs')
+                    .delete()
+                    .gte('id', 0);
+                if (error) throw error;
+                document.getElementById('history').style.display = 'none';
+                log('🗑️ History cleared');
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        
+        document.getElementById('calcForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            log('🔵 Form submitted');
+            log('🔵 Submit');
             
             try {
                 const meterStart = parseFloat(document.getElementById('meterStart').value);
@@ -223,31 +309,43 @@
                 const timeStart = document.getElementById('timeStart').value;
                 const timeEnd = document.getElementById('timeEnd').value;
                 
-                log(`📊 Data: ${meterStart} → ${meterEnd}, ${timeStart} → ${timeEnd}`);
-                
                 if (meterEnd <= meterStart) {
-                    alert('Meter akhir harus lebih besar dari meter awal!');
-                    log('❌ Validation failed');
+                    alert('Meter akhir harus lebih besar!');
                     return;
                 }
                 
                 const totalUsage = meterEnd - meterStart;
-                log(`💰 Total: ${totalUsage} m³`);
-                
                 const [sH, sM] = timeStart.split(':').map(Number);
                 const [eH, eM] = timeEnd.split(':').map(Number);
-                
                 let startMin = sH * 60 + sM;
                 let endMin = eH * 60 + eM;
                 if (endMin <= startMin) endMin += 24 * 60;
-                
-                const durationMin = endMin - startMin;
-                const durationHours = durationMin / 60;
+                const durationHours = (endMin - startMin) / 60;
                 const avgPerHour = totalUsage / durationHours;
                 
-                log(`⏱️ Duration: ${durationHours.toFixed(2)}h, Avg: ${avgPerHour.toFixed(2)} m³/h`);
+                log(`💰 ${totalUsage} m³, ${durationHours.toFixed(2)}h, ${avgPerHour.toFixed(2)} m³/h`);
                 
-                // Display stats
+                // Save to database (NON-BLOCKING)
+                if (dbReady) {
+                    supabase.from('shift_logs').insert([{
+                        time_start: timeStart,
+                        time_end: timeEnd,
+                        meter_start: meterStart,
+                        meter_end: meterEnd,
+                        total_usage: totalUsage,
+                        cost: 0,
+                        note: ''
+                    }]).then(({error}) => {
+                        if (error) {
+                            log('❌ DB save failed: ' + error.message);
+                        } else {
+                            log('✅ Saved to DB');
+                            loadHistory();
+                        }
+                    });
+                }
+                
+                // Display results IMMEDIATELY (don't wait for DB)
                 document.getElementById('resTotal').textContent = totalUsage.toFixed(2);
                 document.getElementById('resDuration').textContent = durationHours.toFixed(2);
                 document.getElementById('resAvg').textContent = avgPerHour.toFixed(2);
@@ -255,14 +353,11 @@
                 // Generate table
                 const tbody = document.getElementById('tableBody');
                 tbody.innerHTML = '';
-                
                 let cumulative = 0;
                 const numHours = Math.floor(durationHours);
                 
-                // Starting row
                 tbody.innerHTML += `<tr><td>${timeStart}</td><td>${meterStart.toFixed(2)}</td><td>0.00</td><td>0.00</td></tr>`;
                 
-                // Hourly rows
                 for (let i = 1; i <= numHours; i++) {
                     const hourTime = ((sH + i) % 24).toString().padStart(2, '0') + ':' + sM.toString().padStart(2, '0');
                     cumulative += avgPerHour;
@@ -270,21 +365,15 @@
                     tbody.innerHTML += `<tr><td>${hourTime}</td><td>${currentMeter.toFixed(2)}</td><td>${avgPerHour.toFixed(2)}</td><td>${cumulative.toFixed(2)}</td></tr>`;
                 }
                 
-                // Last row if partial hour
                 if (durationHours > numHours) {
                     const lastUsage = totalUsage - cumulative;
                     tbody.innerHTML += `<tr><td>${timeEnd}</td><td>${meterEnd.toFixed(2)}</td><td>${lastUsage.toFixed(2)}</td><td>${totalUsage.toFixed(2)}</td></tr>`;
                 }
                 
-                log('📊 Table generated');
-                
-                // Show results
                 document.getElementById('results').classList.add('show');
-                log('✅ DONE! Results displayed');
+                log('✅ DONE');
                 
-                // Reset form
                 this.reset();
-                
             } catch (error) {
                 log('❌ ERROR: ' + error.message);
                 alert('ERROR: ' + error.message);
