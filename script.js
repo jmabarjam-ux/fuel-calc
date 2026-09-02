@@ -132,46 +132,36 @@ async function renderCharts() {
         const trendData = labels.map(d => (daily[d].total / daily[d].count).toFixed(2));
 
         const canvas1 = document.getElementById('trendChart');
-        const canvas2 = document.getElementById('shiftChart');
-        log('📈 Canvas1: ' + !!canvas1 + ', Canvas2: ' + !!canvas2);
-        if (!canvas1 || !canvas2) {
-            log('❌ Canvas elements not found');
-            return;
-        }
+        if (!canvas1) return;
 
         const ctx1 = canvas1.getContext('2d');
         if (trendChart) trendChart.destroy();
         trendChart = new Chart(ctx1, {
             type: 'line',
             data: { labels, datasets: [{
-                label: 'Rata-rata m³/jam',
+                label: 'm³/jam',
                 data: trendData,
                 borderColor: '#00f2ff',
                 backgroundColor: 'rgba(0,242,255,0.1)',
                 fill: true,
                 tension: 0.3,
-                pointRadius: 4,
+                pointRadius: 2,
                 pointBackgroundColor: '#00f2ff'
             }]},
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    plugins: { legend: { display: false } }, // Sembunyikan legenda
-                    scales: { 
-                        x: { display: false, grid: { display: false }}, // Sembunyikan grid/label X
-                        y: { display: false, grid: { display: false }, beginAtZero: true } // Sembunyikan grid/label Y
-                    }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { display: false },
+                    y: { display: false, beginAtZero: true }
                 }
-            });
-            log('📈 Trend chart created');
+            }
+        });
+        log('📈 Trend chart created');
 
-        document.getElementById('charts').style.display = 'grid';
-        log('📈 Charts container display=grid');
-    } catch (e) {
-        log('⚠️ Chart render failed: ' + e.message);
-    }
-}
+        document.getElementById('charts').style.display = 'block';
 
 if (dbReady) {
     log('✅ Supabase ready');
