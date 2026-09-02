@@ -106,7 +106,14 @@ async function renderCharts() {
         log('📈 First row: created_at=' + data[0].created_at + ', time_start=' + data[0].time_start + ', total_usage=' + data[0].total_usage);
 
         const daily = {};
-        const shiftTotals = { '07:00': 0, '15:00': 0, '23:00': 0 };
+        const shiftTotals = { 'pagi': 0, 'sore': 0, 'malam': 0 };
+
+        const getShift = (timeStr) => {
+            const hour = parseInt(timeStr.slice(0, 2));
+            if (hour >= 7 && hour < 15) return 'pagi';
+            if (hour >= 15 && hour < 23) return 'sore';
+            return 'malam';
+        };
 
         data.forEach(row => {
             const date = new Date(row.created_at).toISOString().split('T')[0];
@@ -114,8 +121,8 @@ async function renderCharts() {
             daily[date].total += row.total_usage;
             daily[date].count++;
             
-            const shiftKey = row.time_start.slice(0, 5);
-            if (shiftTotals[shiftKey] !== undefined) shiftTotals[shiftKey] += row.total_usage;
+            const shift = getShift(row.time_start);
+            shiftTotals[shift] += row.total_usage;
         });
 
         log('📈 Daily aggregated: ' + JSON.stringify(daily));
@@ -146,41 +153,45 @@ async function renderCharts() {
                 pointRadius: 4,
                 pointBackgroundColor: '#00f2ff'
             }]},
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#fff' } } },
-                scales: { 
-                    x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }},
-                    y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }, // Sembunyikan legenda
+                    scales: { 
+                        x: { display: false, grid: { display: false }}, // Sembunyikan grid/label X
+                        y: { display: false, grid: { display: false }, beginAtZero: true } // Sembunyikan grid/label Y
+                    }
                 }
-            }
-        });
-        log('📈 Trend chart created');
+            });
+            log('📈 Trend chart created');
 
-        const ctx2 = canvas2.getContext('2d');
-        if (shiftChart) shiftChart.destroy();
-        shiftChart = new Chart(ctx2, {
-            type: 'bar',
-            data: { 
-                labels: ['🌅 Pagi (07-15)', '☀️ Sore (15-23)', '🌙 Malam (23-07)'],
-                datasets: [{
-                    label: 'Total m³',
-                    data: [shiftTotals['07:00'], shiftTotals['15:00'], shiftTotals['23:00']],
-                    backgroundColor: ['#00f2ff', '#d946ef', '#10b981'],
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { ticks: { color: '#a0aec0' }, grid: { display: false }},
-                    y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+            const ctx2 = canvas2.getContext('2d');
+            if (shiftChart) shiftChart.destroy();
+            shiftChart = new Chart(ctx2, {
+                type: 'line',
+                data: { 
+                    labels: ['🌅 Pagi', '☀️ Sore', '🌙 Malam'],
+                    datasets: [{
+                        label: 'Total m³',
+                        data: [shiftTotals['pagi'], shiftTotals['sore'], shiftTotals['malam']],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 2,
+                        pointBackgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { display: false, grid: { display: false }},
+                        y: { display: false, grid: { display: false }, beginAtZero: true }
+                    }
                 }
-            }
-        });
+            });
         log('📈 Shift chart created');
 
         document.getElementById('charts').style.display = 'grid';
