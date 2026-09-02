@@ -135,30 +135,35 @@ async function renderCharts() {
         if (!canvas1) return;
 
         const ctx1 = canvas1.getContext('2d');
-        if (trendChart) trendChart.destroy();
-        trendChart = new Chart(ctx1, {
-            type: 'line',
-            data: { labels, datasets: [{
-                label: 'm³/jam',
-                data: trendData,
-                borderColor: '#00f2ff',
-                backgroundColor: 'rgba(0,242,255,0.1)',
-                fill: true,
-                tension: 0.3,
-                pointRadius: 2,
-                pointBackgroundColor: '#00f2ff'
-            }]},
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                animation: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { display: false },
-                    y: { display: false, beginAtZero: true }
+        if (trendChart) {
+            trendChart.data.labels = labels;
+            trendChart.data.datasets[0].data = trendData;
+            trendChart.update();
+        } else {
+            trendChart = new Chart(ctx1, {
+                type: 'line',
+                data: { labels, datasets: [{
+                    label: 'm³/jam',
+                    data: trendData,
+                    borderColor: '#00f2ff',
+                    backgroundColor: 'rgba(0,242,255,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#00f2ff'
+                }]},
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { display: false },
+                        y: { display: false, beginAtZero: true }
+                    }
                 }
-            }
-        });
+            });
+        }
         log('📈 Trend chart created');
 
         document.getElementById('charts').style.display = 'block';
