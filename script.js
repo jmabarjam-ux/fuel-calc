@@ -112,7 +112,15 @@ async function renderCharts() {
         const labels = Object.keys(daily).slice(-7);
         const trendData = labels.map(d => (daily[d].total / daily[d].count).toFixed(2));
 
-        const ctx1 = document.getElementById('trendChart').getContext('2d');
+        const canvas1 = document.getElementById('trendChart');
+        const canvas2 = document.getElementById('shiftChart');
+        log('📈 Canvas1: ' + !!canvas1 + ', Canvas2: ' + !!canvas2);
+        if (!canvas1 || !canvas2) {
+            log('❌ Canvas elements not found');
+            return;
+        }
+
+        const ctx1 = canvas1.getContext('2d');
         if (trendChart) trendChart.destroy();
         trendChart = new Chart(ctx1, {
             type: 'line',
@@ -136,8 +144,9 @@ async function renderCharts() {
                 }
             }
         });
+        log('📈 Trend chart created');
 
-        const ctx2 = document.getElementById('shiftChart').getContext('2d');
+        const ctx2 = canvas2.getContext('2d');
         if (shiftChart) shiftChart.destroy();
         shiftChart = new Chart(ctx2, {
             type: 'bar',
@@ -160,9 +169,10 @@ async function renderCharts() {
                 }
             }
         });
+        log('📈 Shift chart created');
 
         document.getElementById('charts').style.display = 'grid';
-        log('📈 Charts rendered');
+        log('📈 Charts container display=grid');
     } catch (e) {
         log('⚠️ Chart render failed: ' + e.message);
     }
