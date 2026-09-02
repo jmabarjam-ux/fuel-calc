@@ -84,6 +84,7 @@ async function renderCharts() {
             .limit(30);
         
         if (error) throw error;
+        log('📈 Chart query data: ' + JSON.stringify(data));
         if (!data?.length) return;
 
         const daily = {};
