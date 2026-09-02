@@ -168,6 +168,11 @@ async function renderCharts() {
 
         document.getElementById('charts').style.display = 'block';
 
+    } catch (e) {
+        log('⚠️ Chart render failed: ' + e.message);
+    }
+}
+
 if (dbReady) {
     log('✅ Supabase ready');
     document.getElementById('dbStatus').innerHTML = '<div class="status success">✅ Database connected</div>';
