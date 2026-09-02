@@ -6,10 +6,21 @@ const resultsArea = document.getElementById('resultsArea');
 const resultTable = document.getElementById('resultTable').querySelector('tbody');
 const exportHistoryBtn = document.getElementById('exportHistoryBtn');
 
-// Supabase Initialization
+// Supabase Initialization (with error handling)
 const supabaseUrl = 'https://dpnerteilzewxvndziit.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I';
-const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+let supabaseClient;
+try {
+    if (window.supabase) {
+        supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        console.log('✅ Supabase client initialized');
+    } else {
+        console.error('❌ Supabase library not loaded!');
+    }
+} catch (error) {
+    console.error('❌ Error initializing Supabase:', error);
+}
 
 let tableData = [];
 let usageChart = null;
@@ -38,17 +49,22 @@ function setShift(start, end) {
     document.getElementById('timeEnd').value = end;
 }
 
-particlesJS("particles-js", {
-    "particles": {
-        "number": { "value": 50, "density": { "enable": true, "value_area": 800 } },
-        "color": { "value": "#ff6600" },
-        "shape": { "type": "circle" },
-        "opacity": { "value": 0.3 },
-        "size": { "value": 3 },
-        "line_linked": { "enable": true, "distance": 150, "color": "#ff6600", "opacity": 0.2, "width": 1 }
-    },
-    "interactivity": { "events": { "onhover": { "enable": true, "mode": "repulse" } } }
-});
+// Initialize particles (with error handling)
+if (typeof particlesJS !== 'undefined') {
+    particlesJS("particles-js", {
+        "particles": {
+            "number": { "value": 50, "density": { "enable": true, "value_area": 800 } },
+            "color": { "value": "#ff6600" },
+            "shape": { "type": "circle" },
+            "opacity": { "value": 0.3 },
+            "size": { "value": 3 },
+            "line_linked": { "enable": true, "distance": 150, "color": "#ff6600", "opacity": 0.2, "width": 1 }
+        },
+        "interactivity": { "events": { "onhover": { "enable": true, "mode": "repulse" } } }
+    });
+} else {
+    console.warn('ParticlesJS library not loaded');
+}
 
 // Initialize localStorage check on load
 window.addEventListener('DOMContentLoaded', () => {
@@ -96,26 +112,30 @@ meterForm.addEventListener('submit', async (e) => {
     const totalUsage = meterEnd - meterStart;
     const totalCost = totalUsage * unitPrice;
 
-    // Save to Supabase
-    const { error } = await supabaseClient
-        .from('shift_logs')
-        .insert([{
-            time_start: timeStart,
-            time_end: timeEnd,
-            meter_start: meterStart,
-            meter_end: meterEnd,
-            total_usage: totalUsage,
-            cost: totalCost,
-            note: shiftNote
-        }]);
+    // Save to Supabase (with check)
+    if (supabaseClient) {
+        const { error } = await supabaseClient
+            .from('shift_logs')
+            .insert([{
+                time_start: timeStart,
+                time_end: timeEnd,
+                meter_start: meterStart,
+                meter_end: meterEnd,
+                total_usage: totalUsage,
+                cost: totalCost,
+                note: shiftNote
+            }]);
 
-    if (error) {
-        console.error('Error saving data:', error);
-        alert("Gagal menyimpan data ke database.");
-        return;
+        if (error) {
+            console.error('Error saving data:', error);
+            alert("Gagal menyimpan data ke database: " + error.message);
+            // Lanjutkan kalkulasi meski gagal save
+        } else {
+            renderShiftHistory();
+        }
+    } else {
+        console.warn('⚠️ Supabase not initialized, skipping database save');
     }
-    
-    renderShiftHistory();
 
     // Parse times (LAKUKAN SEBELUM RESET)
 
@@ -241,6 +261,12 @@ async function renderShiftHistory() {
     const tbody = document.getElementById('historyLogTable').querySelector('tbody');
     const loader = document.getElementById('loader');
 
+    if (!supabaseClient) {
+        console.warn('⚠️ Supabase not initialized, skipping history load');
+        historyCard.style.display = 'none';
+        return;
+    }
+
     loader.style.display = 'block';
     
     const { data: historyLog, error } = await supabaseClient
@@ -250,7 +276,13 @@ async function renderShiftHistory() {
 
     loader.style.display = 'none';
 
-    if (error || !historyLog || historyLog.length === 0) {
+    if (error) {
+        console.error('Error loading history:', error);
+        historyCard.style.display = 'none';
+        return;
+    }
+
+    if (!historyLog || historyLog.length === 0) {
         historyCard.style.display = 'none';
         return;
     }
@@ -269,15 +301,20 @@ async function renderShiftHistory() {
 }
 
 document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
+    if (!supabaseClient) {
+        alert('Supabase tidak terkoneksi!');
+        return;
+    }
+    
     if (confirm("Yakin ingin menghapus seluruh log riwayat shift gas dari database?")) {
         const { error } = await supabaseClient
             .from('shift_logs')
             .delete()
-            .neq('id', 0); // Hack to delete all, assuming id > 0
+            .gte('id', 0); // Delete all records where id >= 0
 
         if (error) {
             console.error('Error clearing history:', error);
-            alert("Gagal menghapus log.");
+            alert("Gagal menghapus log: " + error.message);
             return;
         }
 
@@ -287,16 +324,21 @@ document.getElementById('clearHistoryBtn').addEventListener('click', async () =>
 });
 
 exportHistoryBtn.addEventListener('click', async () => {
+    if (!supabaseClient) {
+        alert('Supabase tidak terkoneksi!');
+        return;
+    }
+    
     const { data: historyLog, error } = await supabaseClient
         .from('shift_logs')
         .select('*');
 
     if (error) {
-        alert("Gagal mengambil data untuk export.");
+        alert("Gagal mengambil data untuk export: " + error.message);
         return;
     }
     
-    const blob = new Blob([JSON.stringify(historyLog)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(historyLog, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

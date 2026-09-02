@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Fuel Calc - Debug Console</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #0f0; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #333; }
+        .pass { background: #002200; border-color: #00ff00; }
+        .fail { background: #220000; border-color: #ff0000; color: #f00; }
+        button { margin: 5px; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Fuel Calculator - Bug Testing</h1>
+    
+    <h2>Test 1: Supabase Connection</h2>
+    <button onclick="testSupabase()">Test Koneksi Supabase</button>
+    <div id="test1"></div>
+    
+    <h2>Test 2: Form Calculation</h2>
+    <button onclick="testCalculation()">Test Kalkulasi Lokal</button>
+    <div id="test2"></div>
+    
+    <h2>Test 3: Database Insert</h2>
+    <button onclick="testInsert()">Test Insert Data</button>
+    <div id="test3"></div>
+    
+    <h2>Test 4: Database Read</h2>
+    <button onclick="testRead()">Test Baca Data</button>
+    <div id="test4"></div>
+
+    <script>
+        const supabaseUrl = 'https://dpnerteilzewxvndziit.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbmVydGVpbHpld3h2bmR6aWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDM0NjYsImV4cCI6MjEwMzkxOTQ2Nn0.Id4rkDHuOJAT479UsNSgif2J1l38nkOm9oGQ8RJbf6I';
+        
+        let supabaseClient;
+        
+        async function testSupabase() {
+            const result = document.getElementById('test1');
+            result.innerHTML = '⏳ Testing...';
+            
+            try {
+                if (!window.supabase) {
+                    result.innerHTML = '<div class="test fail">❌ FAIL: Supabase library tidak loaded!</div>';
+                    return;
+                }
+                
+                supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+                
+                if (!supabaseClient) {
+                    result.innerHTML = '<div class="test fail">❌ FAIL: Supabase client tidak bisa dibuat!</div>';
+                    return;
+                }
+                
+                result.innerHTML = '<div class="test pass">✅ PASS: Supabase client berhasil dibuat!</div>';
+            } catch (error) {
+                result.innerHTML = `<div class="test fail">❌ FAIL: ${error.message}</div>`;
+            }
+        }
+        
+        function testCalculation() {
+            const result = document.getElementById('test2');
+            result.innerHTML = '⏳ Testing...';
+            
+            try {
+                // Test data
+                const meterStart = 1000;
+                const meterEnd = 1150;
+                const timeStart = '07:00';
+                const timeEnd = '15:00';
+                
+                const totalUsage = meterEnd - meterStart;
+                
+                const [sH, sM] = timeStart.split(':').map(Number);
+                const [eH, eM] = timeEnd.split(':').map(Number);
+                
+                let startTotalMinutes = sH * 60 + sM;
+                let endTotalMinutes = eH * 60 + eM;
+                
+                if (endTotalMinutes <= startTotalMinutes) endTotalMinutes += 24 * 60;
+                
+                const durationMinutes = endTotalMinutes - startTotalMinutes;
+                const durationHours = durationMinutes / 60;
+                const avgUsagePerHour = totalUsage / durationHours;
+                
+                let output = `<div class="test pass">✅ PASS: Kalkulasi berhasil!<br>`;
+                output += `Total Usage: ${totalUsage} m³<br>`;
+                output += `Duration: ${durationHours} jam<br>`;
+                output += `Average: ${avgUsagePerHour.toFixed(2)} m³/jam</div>`;
+                
+                result.innerHTML = output;
+            } catch (error) {
+                result.innerHTML = `<div class="test fail">❌ FAIL: ${error.message}</div>`;
+            }
+        }
+        
+        async function testInsert() {
+            const result = document.getElementById('test3');
+            result.innerHTML = '⏳ Testing...';
+            
+            if (!supabaseClient) {
+                result.innerHTML = '<div class="test fail">❌ Jalankan Test 1 dulu!</div>';
+                return;
+            }
+            
+            try {
+                const testData = {
+                    time_start: '07:00',
+                    time_end: '15:00',
+                    meter_start: 1000,
+                    meter_end: 1150,
+                    total_usage: 150,
+                    cost: 0,
+                    note: 'Test Insert dari test.html'
+                };
+                
+                const { data, error } = await supabaseClient
+                    .from('shift_logs')
+                    .insert([testData])
+                    .select();
+                
+                if (error) {
+                    result.innerHTML = `<div class="test fail">❌ FAIL: ${error.message}<br>Code: ${error.code}<br>Details: ${error.details}</div>`;
+                } else {
+                    result.innerHTML = `<div class="test pass">✅ PASS: Data berhasil disimpan!<br>ID: ${data[0].id}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="test fail">❌ FAIL: ${error.message}</div>`;
+            }
+        }
+        
+        async function testRead() {
+            const result = document.getElementById('test4');
+            result.innerHTML = '⏳ Testing...';
+            
+            if (!supabaseClient) {
+                result.innerHTML = '<div class="test fail">❌ Jalankan Test 1 dulu!</div>';
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('shift_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+                
+                if (error) {
+                    result.innerHTML = `<div class="test fail">❌ FAIL: ${error.message}<br>Code: ${error.code}</div>`;
+                } else {
+                    let output = `<div class="test pass">✅ PASS: Data berhasil dibaca!<br>Jumlah record: ${data.length}<br><br>`;
+                    data.forEach((row, i) => {
+                        output += `${i+1}. ${row.time_start}-${row.time_end} | ${row.total_usage} m³ | ${row.note || '-'}<br>`;
+                    });
+                    output += '</div>';
+                    result.innerHTML = output;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="test fail">❌ FAIL: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto run test 1
+        window.onload = () => {
+            console.log('🔧 Test page loaded. Run tests manually.');
+        };
+    </script>
+</body>
+</html>
