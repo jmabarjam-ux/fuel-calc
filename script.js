@@ -117,11 +117,7 @@ meterForm.addEventListener('submit', async (e) => {
     
     renderShiftHistory();
 
-    // Clear saved form data
-    localStorage.removeItem('formDataGas');
-    meterForm.reset();
-
-    // Parse times
+    // Parse times (LAKUKAN SEBELUM RESET)
 
     const [sH, sM] = timeStart.split(':').map(Number);
     const [eH, eM] = timeEnd.split(':').map(Number);
@@ -199,6 +195,10 @@ meterForm.addEventListener('submit', async (e) => {
     resultsArea.style.display = 'block';
     updateChart();
     showToast("🔥 Kalkulasi Pemakaian Gas berhasil dicatat!");
+
+    // Clear saved form data and reset (DI AKHIR)
+    localStorage.removeItem('formDataGas');
+    meterForm.reset();
 });
 
 function updateChart() {
