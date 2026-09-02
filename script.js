@@ -121,41 +121,44 @@ meterForm.addEventListener('submit', async (e) => {
         console.log('💰 Kalkulasi:', { totalUsage });
         mlog(`💰 Total usage: ${totalUsage}`);
 
-        // Save to Supabase (with check)
+        // Save to Supabase (NON-BLOCKING - jangan sampai menghentikan kalkulasi)
         if (supabaseClient) {
             console.log('💾 Saving to Supabase...');
-            try {
-                const { data, error } = await supabaseClient
-                    .from('shift_logs')
-                    .insert([{
-                        time_start: timeStart,
-                        time_end: timeEnd,
-                        meter_start: meterStart,
-                        meter_end: meterEnd,
-                        total_usage: totalUsage,
-                        cost: 0,
-                        note: ''
-                    }])
-                    .select();
-
-                if (error) {
-                    console.error('❌ Error saving data:', error);
-                    alert("Gagal menyimpan ke database: " + error.message);
-                } else {
-                    console.log('✅ Saved to database:', data);
-                    renderShiftHistory();
-                }
-            } catch (dbError) {
-                console.error('❌ Database exception:', dbError);
-                alert("Error database: " + dbError.message);
-            }
+            mlog('💾 Saving to Supabase...');
+            supabaseClient
+                .from('shift_logs')
+                .insert([{
+                    time_start: timeStart,
+                    time_end: timeEnd,
+                    meter_start: meterStart,
+                    meter_end: meterEnd,
+                    total_usage: totalUsage,
+                    cost: 0,
+                    note: ''
+                }])
+                .select()
+                .then(({ data, error }) => {
+                    if (error) {
+                        console.error('❌ Error saving data:', error);
+                        mlog('❌ DB save failed: ' + error.message);
+                    } else {
+                        console.log('✅ Saved to database:', data);
+                        mlog('✅ Saved to database');
+                        renderShiftHistory();
+                    }
+                })
+                .catch(dbError => {
+                    console.error('❌ Database exception:', dbError);
+                    mlog('❌ DB exception: ' + dbError.message);
+                });
         } else {
             console.warn('⚠️ Supabase not initialized');
-            alert('⚠️ Aplikasi berjalan offline - data tidak tersimpan ke database');
+            mlog('⚠️ Offline mode - no DB save');
         }
 
-        // Parse times (LAKUKAN SEBELUM RESET)
+        // LANJUTKAN KALKULASI (tidak tunggu database)
         console.log('🧮 Mulai kalkulasi...');
+        mlog('🧮 Mulai kalkulasi...');
 
         const [sH, sM] = timeStart.split(':').map(Number);
         const [eH, eM] = timeEnd.split(':').map(Number);
@@ -197,6 +200,7 @@ meterForm.addEventListener('submit', async (e) => {
         }
 
         console.log('📊 Generating table...');
+        mlog('📊 Generating table...');
 
         // Generate Table
         tableData = [];
@@ -229,9 +233,11 @@ meterForm.addEventListener('submit', async (e) => {
         }
 
         console.log('📺 Displaying results...');
+        mlog('📺 Displaying results...');
         resultsArea.style.display = 'block';
         
         console.log('📉 Updating chart...');
+        mlog('📉 Updating chart...');
         updateChart();
         
         showToast("🔥 Kalkulasi Pemakaian Gas berhasil dicatat!");
@@ -240,9 +246,11 @@ meterForm.addEventListener('submit', async (e) => {
         meterForm.reset();
         
         console.log('✅ Done!');
+        mlog('✅ Done!');
         
     } catch (error) {
         console.error('❌ FATAL ERROR:', error);
+        mlog('❌ FATAL ERROR: ' + error.message);
         alert('ERROR: ' + error.message + '\n\nCek console untuk detail.');
     }
 });
